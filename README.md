@@ -72,14 +72,6 @@ service
 | PUT | `/api/users/{id}` | Update user |
 | DELETE | `/api/users/{id}` | Delete user |
 
-## Environment Variables
-
-The application uses environment variables for sensitive configuration.
-
-```text
-DB_PASSWORD=your_postgresql_password
-```
-
 ## Roadmap
 
 - [x] User CRUD
