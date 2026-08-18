@@ -1,108 +1,144 @@
-# Banking API 🏦
+<div align="center">
 
-A RESTful banking backend application built with Java and Spring Boot.
+# 🏦 Banking API
 
-The project focuses on clean backend architecture, authentication, account ownership, balance operations, transfers, and transaction history.
+### Secure Banking Backend built with Java & Spring Boot
 
-## Tech Stack
+A portfolio banking backend featuring **JWT Authentication, secure account operations, money transfers and transaction history.**
 
-- Java 21
-- Spring Boot
-- Spring Web MVC
-- Spring Data JPA
-- Spring Security
-- PostgreSQL
-- JWT Authentication
-- BCrypt Password Hashing
-- Jakarta Validation
-- Maven
-- Lombok
-- Docker
-- Git & GitHub
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-brightgreen)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![JWT](https://img.shields.io/badge/Auth-JWT-purple)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
 
-## Features
+</div>
 
-### Authentication & Security
+---
 
-- User registration
-- User login
-- BCrypt password hashing
-- JWT token generation
-- JWT validation
-- Stateless authentication
-- Protected API endpoints
-- Account ownership authorization
-- Unauthorized access handling with `401`
-- Forbidden account access handling with `403`
+## ✨ Features
 
-### User Management
+### 🔐 Authentication & Security
 
-- Create user
-- Get users
-- Get user by ID
-- Update user
-- Delete user
-- Email validation
-- Duplicate email protection
+- ✅ User Registration
+- ✅ User Login
+- ✅ BCrypt Password Hashing
+- ✅ JWT Token Generation
+- ✅ JWT Token Validation
+- ✅ Stateless Authentication
+- ✅ Protected API Endpoints
+- ✅ Account Ownership Control
+- ✅ `401 Unauthorized` handling
+- ✅ `403 Forbidden` handling
 
-### Bank Accounts
+---
 
-- Create an account for the authenticated user
-- Automatically generated account numbers
-- View authenticated user's accounts
-- View a specific owned account
-- Account ownership validation
-- Balance management
+### 👤 User Management
 
-### Banking Operations
+- ✅ Create User
+- ✅ Get User
+- ✅ Update User
+- ✅ Delete User
+- ✅ Email Validation
+- ✅ Duplicate Email Protection
+- ✅ Request / Response DTOs
 
-- Deposit money
-- Withdraw money
-- Transfer money between accounts
-- Insufficient balance validation
-- Same-account transfer prevention
-- Secure account ownership checks
-- Transaction rollback with `@Transactional`
+---
 
-### Transaction History
+### 💳 Bank Accounts
 
-- Deposit history
-- Withdrawal history
-- Transfer history
-- Incoming / outgoing transaction direction
-- Account-specific transaction history
-- Secure transaction history access
-- Transactions ordered by newest first
+- ✅ Create Bank Account
+- ✅ Automatic Account Number Generation
+- ✅ View My Accounts
+- ✅ View Specific Account
+- ✅ Account Ownership Validation
+- ✅ Secure Account Access
 
-## Authentication Flow
+Example account number:
 
 ```text
-Register / Login
-       ↓
-Email + Password
-       ↓
-BCrypt Password Validation
-       ↓
-JWT Generated
-       ↓
-Authorization: Bearer <token>
-       ↓
-JwtAuthFilter
-       ↓
-Protected Endpoint
+ACC-A1602ADE
 ```
 
-## API Endpoints
+---
 
-### Authentication
+### 💸 Banking Operations
 
-#### Register
+- ✅ Deposit Money
+- ✅ Withdraw Money
+- ✅ Transfer Money
+- ✅ Balance Validation
+- ✅ Insufficient Balance Protection
+- ✅ Same Account Transfer Protection
+- ✅ Secure Sender Ownership Check
+- ✅ Database Transaction Management with `@Transactional`
+
+---
+
+### 📜 Transaction History
+
+- ✅ Deposit History
+- ✅ Withdrawal History
+- ✅ Transfer History
+- ✅ Incoming Transactions
+- ✅ Outgoing Transactions
+- ✅ Account-Based Transaction History
+- ✅ Newest Transactions First
+- ✅ Secure Transaction Access
+
+Example:
+
+```json
+{
+  "type": "TRANSFER",
+  "direction": "OUTGOING",
+  "amount": 250.00,
+  "accountId": 6,
+  "targetAccountId": 2
+}
+```
+
+---
+
+# 🔐 Authentication Flow
+
+```text
+        REGISTER / LOGIN
+               │
+               ▼
+        Email + Password
+               │
+               ▼
+        BCrypt Validation
+               │
+               ▼
+          JWT Generated
+               │
+               ▼
+ Authorization: Bearer <TOKEN>
+               │
+               ▼
+          JwtAuthFilter
+               │
+               ▼
+       Spring Security
+               │
+               ▼
+       Protected API 🔒
+```
+
+---
+
+# 🚀 API Overview
+
+## 🔓 Authentication
+
+### Register
 
 ```http
 POST /api/auth/register
 ```
-
-Example:
 
 ```json
 {
@@ -112,26 +148,11 @@ Example:
 }
 ```
 
-Response:
-
-```json
-{
-  "token": "eyJhbGciOi...",
-  "user": {
-    "id": 1,
-    "fullName": "John Doe",
-    "email": "john@example.com"
-  }
-}
-```
-
-#### Login
+### Login
 
 ```http
 POST /api/auth/login
 ```
-
-Example:
 
 ```json
 {
@@ -140,7 +161,7 @@ Example:
 }
 ```
 
-Response:
+Successful authentication:
 
 ```json
 {
@@ -153,39 +174,33 @@ Response:
 }
 ```
 
-## Account Endpoints
+---
 
-All account endpoints require:
+## 🔒 Account Operations
 
-```http
-Authorization: Bearer <JWT_TOKEN>
-```
+> All endpoints below require a valid JWT.
 
-### Create Account
+### 🆕 Create Account
 
 ```http
 POST /api/accounts
 ```
 
-No request body is required.
-
 The account is automatically created for the authenticated user.
 
-### Get My Accounts
+No `userId` is accepted from the client. 🔐
+
+---
+
+### 👀 My Accounts
 
 ```http
 GET /api/accounts/me
 ```
 
-### Get My Account By ID
+---
 
-```http
-GET /api/accounts/{accountId}
-```
-
-Users can only access accounts they own.
-
-### Deposit
+### 💰 Deposit
 
 ```http
 POST /api/accounts/{accountId}/deposit
@@ -197,7 +212,9 @@ POST /api/accounts/{accountId}/deposit
 }
 ```
 
-### Withdraw
+---
+
+### 💸 Withdraw
 
 ```http
 POST /api/accounts/{accountId}/withdraw
@@ -209,9 +226,9 @@ POST /api/accounts/{accountId}/withdraw
 }
 ```
 
-Users cannot deposit into or withdraw from accounts they do not own.
+---
 
-### Transfer
+### 🔄 Transfer
 
 ```http
 POST /api/accounts/transfer
@@ -219,144 +236,124 @@ POST /api/accounts/transfer
 
 ```json
 {
-  "fromAccountId": 1,
+  "fromAccountId": 6,
   "toAccountId": 2,
   "amount": 250
 }
 ```
 
-The authenticated user must own the sender account.
+✅ Sender account must belong to the authenticated user.
 
-The receiver account may belong to another user.
+✅ Receiver account may belong to another user.
 
-## Transaction Endpoints
+---
 
-### Account Transaction History
+## 📜 Transaction History
 
 ```http
 GET /api/transactions/account/{accountId}
 ```
 
-Only the owner of the account can view its transaction history.
+Users can only view transactions belonging to their own accounts.
 
-Example response:
+---
 
-```json
-[
-  {
-    "id": 10,
-    "type": "TRANSFER",
-    "direction": "OUTGOING",
-    "amount": 250.00,
-    "accountId": 1,
-    "targetAccountId": 2,
-    "createdAt": "2026-08-18T14:30:00"
-  }
-]
-```
-
-Transaction direction can be:
+# 🛡️ Security Rules
 
 ```text
-INCOMING
-OUTGOING
+❌ Plain text passwords are never stored
+✅ Passwords are hashed with BCrypt
+
+❌ JWT secret is never committed
+✅ JWT secret comes from environment variables
+
+❌ Clients cannot choose another user's account
+✅ Account ownership comes from authenticated JWT identity
+
+❌ Users cannot withdraw from another user's account
+✅ Ownership validation runs before banking operations
 ```
 
-## HTTP Status Codes
+---
 
-| Status | Meaning |
-|---|---|
-| `200 OK` | Request completed successfully |
-| `201 Created` | Resource created successfully |
-| `204 No Content` | Resource deleted successfully |
-| `400 Bad Request` | Validation or business rule error |
-| `401 Unauthorized` | Authentication required or credentials invalid |
-| `403 Forbidden` | User does not own the requested account |
-| `404 Not Found` | Resource not found |
-| `409 Conflict` | Email already exists |
-
-## Security
-
-Passwords are never stored as plain text.
-
-Passwords are hashed using BCrypt before being saved to PostgreSQL.
-
-JWT tokens are signed using a secret stored outside the source code.
-
-Required environment variables:
+# ⚙️ Environment Variables
 
 ```text
 DB_PASSWORD=your_postgresql_password
 JWT_SECRET=your_base64_jwt_secret
 ```
 
-Do not commit real secrets to Git.
+⚠️ Never commit real secrets to GitHub.
 
-## Configuration
+---
 
-Example `application.properties`:
-
-```properties
-spring.application.name=banking-api
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/banking_db
-spring.datasource.username=banking_user
-spring.datasource.password=${DB_PASSWORD}
-
-spring.jpa.show-sql=true
-spring.jpa.properties.jakarta.persistence.schema-generation.database.action=update
-
-jwt.secret=${JWT_SECRET}
-jwt.expiration=86400000
-```
-
-JWT expiration is currently configured as:
+# 🧱 Project Architecture
 
 ```text
-24 hours
+Controller
+    │
+    ▼
+Service
+    │
+    ▼
+Repository
+    │
+    ▼
+PostgreSQL
 ```
 
-## Project Structure
+Additional layers:
 
 ```text
-src/main/java/com/batuhan/bankingapi
+DTO
+Mapper
+Exception Handling
+Security
+JWT Filter
+```
+
+---
+
+# 🛠️ Tech Stack
+
+| Technology | Usage |
+|---|---|
+| ☕ Java 21 | Backend Language |
+| 🍃 Spring Boot | Application Framework |
+| 🔐 Spring Security | Authentication & Authorization |
+| 🪪 JWT | Token Authentication |
+| 🔒 BCrypt | Password Hashing |
+| 🐘 PostgreSQL | Database |
+| 🗄️ Spring Data JPA | ORM / Persistence |
+| ✅ Jakarta Validation | Request Validation |
+| 🐳 Docker | Database / Containerization |
+| 📦 Maven | Dependency Management |
+| ✨ Lombok | Boilerplate Reduction |
+
+---
+
+# 📂 Project Structure
+
+```text
+com.batuhan.bankingapi
 │
-├── config
+├── 📁 config
 │   ├── JwtAuthFilter
 │   └── SecurityConfig
 │
-├── controller
+├── 📁 controller
 │   ├── AuthController
 │   ├── AccountController
 │   ├── TransactionController
 │   └── UserController
 │
-├── dto
-│   ├── AccountResponse
-│   ├── AccountTransactionResponse
-│   ├── AuthResponse
-│   ├── CreateUserRequest
-│   ├── DepositRequest
-│   ├── LoginRequest
-│   ├── TransactionDirection
-│   ├── TransferRequest
-│   ├── UpdateUserRequest
-│   ├── UserResponse
-│   └── WithdrawRequest
+├── 📁 dto
+├── 📁 entity
+├── 📁 exception
+├── 📁 mapper
+├── 📁 repository
 │
-├── entity
-│   ├── Account
-│   ├── Transaction
-│   ├── TransactionType
-│   └── User
-│
-├── exception
-│
-├── mapper
-│
-├── repository
-│
-└── service
+└── 📁 service
     ├── AccountService
     ├── AuthService
     ├── JwtService
@@ -364,72 +361,57 @@ src/main/java/com/batuhan/bankingapi
     └── UserService
 ```
 
-## Architecture
+---
 
-The project follows a layered architecture:
+# 🗺️ Roadmap
 
-```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-PostgreSQL
-```
+### Backend
 
-DTOs are used to separate API requests and responses from database entities.
+- [x] User CRUD
+- [x] Account Management
+- [x] Deposit
+- [x] Withdraw
+- [x] Transfer
+- [x] Transaction History
+- [x] BCrypt Authentication
+- [x] JWT Authentication
+- [x] Account Authorization
+- [ ] Unit Tests
+- [ ] Integration Tests
+- [ ] Swagger / OpenAPI
+- [ ] Database Migrations
+- [ ] Docker Compose
+- [ ] Concurrency / Account Locking
+- [ ] Refresh Tokens
+- [ ] CI/CD with GitHub Actions
 
-Mappers are used to convert between entities and DTOs.
+### 📱 Mobile App
 
-Authentication is handled through:
+- [ ] Flutter Project
+- [ ] Register Screen
+- [ ] Login Screen
+- [ ] Secure Token Storage
+- [ ] Home Dashboard
+- [ ] Account Details
+- [ ] Deposit / Withdraw
+- [ ] Money Transfer
+- [ ] Transaction History
+- [ ] Profile
 
-```text
-JWT
-↓
-JwtAuthFilter
-↓
-Spring Security
-↓
-SecurityContext
-```
+---
 
-## Roadmap
+<div align="center">
 
-Planned improvements:
+## 🚧 Project Status
 
-- Unit tests
-- Integration tests
-- Spring Security test coverage
-- Docker Compose
-- Database migrations
-- Improved exception response model
-- Account locking / concurrency protection
-- Refresh tokens
-- Role-based authorization
-- Pagination
-- CI/CD with GitHub Actions
-- Swagger / OpenAPI documentation
-- Flutter mobile banking application
+### Backend development is actively continuing.
 
-## Future Mobile Application 📱
+Current focus:
 
-A Flutter mobile application is planned for this backend.
+**Authentication ✅ → Security ✅ → Testing 🧪**
 
-The mobile application will include:
+---
 
-- Register
-- Login
-- Secure token storage
-- Account overview
-- Balance display
-- Deposit
-- Withdraw
-- Money transfer
-- Transaction history
-- Incoming / outgoing transaction UI
-- User profile
+Built with ☕ Java & 🍃 Spring Boot
 
-## Author
-
-Built as a backend banking portfolio project using Java and Spring Boot.
+</div>
