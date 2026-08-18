@@ -34,9 +34,6 @@ public class TransactionService {
 
         return transactionRepository.save(transaction);
     }
-    public List<Transaction> getAllTransactions() {
-        return transactionRepository.findAll();
-    }
     
     public List<Transaction> getTransactionsByAccountId(Long accountId) {
         return transactionRepository

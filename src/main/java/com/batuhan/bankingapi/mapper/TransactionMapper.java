@@ -1,6 +1,6 @@
 package com.batuhan.bankingapi.mapper;
 
-import com.batuhan.bankingapi.dto.TransactionResponse;
+
 import com.batuhan.bankingapi.entity.Transaction;
 import com.batuhan.bankingapi.dto.AccountTransactionResponse;
 import com.batuhan.bankingapi.dto.TransactionDirection;
@@ -8,21 +8,6 @@ import com.batuhan.bankingapi.entity.TransactionType;
 
 public class TransactionMapper {
 
-    public static TransactionResponse toResponse(Transaction transaction) {
-
-        Long targetAccountId = transaction.getTargetAccount() != null
-                ? transaction.getTargetAccount().getId()
-                : null;
-
-        return new TransactionResponse(
-                transaction.getId(),
-                transaction.getType(),
-                transaction.getAmount(),
-                transaction.getAccount().getId(),
-                targetAccountId,
-                transaction.getCreatedAt()
-        );
-    }
     public static AccountTransactionResponse toAccountResponse(
             Transaction transaction,
             Long currentAccountId

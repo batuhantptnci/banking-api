@@ -1,6 +1,5 @@
 package com.batuhan.bankingapi.controller;
 
-import com.batuhan.bankingapi.dto.TransactionResponse;
 import com.batuhan.bankingapi.mapper.TransactionMapper;
 import com.batuhan.bankingapi.service.AccountService;
 import com.batuhan.bankingapi.service.TransactionService;
