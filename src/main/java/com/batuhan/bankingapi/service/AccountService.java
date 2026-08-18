@@ -1,5 +1,6 @@
 package com.batuhan.bankingapi.service;
 
+import com.batuhan.bankingapi.exception.AccountAccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.batuhan.bankingapi.repository.AccountRepository;
@@ -27,9 +28,9 @@ public class AccountService {
         this.userService = userService;
         this.transactionService = transactionService;
     }
-    public Account createAccount(Long userId) {
+    public Account createAccount(String userEmail) {
 
-        User user = userService.getUserById(userId);
+        User user = userService.getUserByEmail(userEmail);
 
         Account account = new Account();
 
@@ -60,12 +61,14 @@ public class AccountService {
                 .orElseThrow(() -> new AccountNotFoundException("Hesap bulunamadı"));
     }
     @Transactional
-    public Account deposit(Long accountId, BigDecimal amount) {
-
-        Account account = getAccountById(accountId);
+    public Account deposit(
+            Long accountId,
+            BigDecimal amount,
+            String userEmail
+    ) {
+        Account account = getOwnedAccount(accountId, userEmail);
 
         BigDecimal newBalance = account.getBalance().add(amount);
-
         account.setBalance(newBalance);
 
         Account savedAccount = accountRepository.save(account);
@@ -80,16 +83,18 @@ public class AccountService {
         return savedAccount;
     }
     @Transactional
-    public Account withdraw(Long accountId, BigDecimal amount) {
-
-        Account account = getAccountById(accountId);
+    public Account withdraw(
+            Long accountId,
+            BigDecimal amount,
+            String userEmail
+    ) {
+        Account account = getOwnedAccount(accountId, userEmail);
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientBalanceException("Yetersiz bakiye");
         }
 
         BigDecimal newBalance = account.getBalance().subtract(amount);
-
         account.setBalance(newBalance);
 
         Account savedAccount = accountRepository.save(account);
@@ -104,19 +109,29 @@ public class AccountService {
         return savedAccount;
     }
     @Transactional
-    public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-
+    public void transfer(
+            Long fromAccountId,
+            Long toAccountId,
+            BigDecimal amount,
+            String userEmail
+    ) {
         if (fromAccountId.equals(toAccountId)) {
             throw new InvalidTransferException(
                     "Gönderen ve alıcı hesap aynı olamaz"
             );
         }
 
-        Account fromAccount = getAccountById(fromAccountId);
+        Account fromAccount = getOwnedAccount(
+                fromAccountId,
+                userEmail
+        );
+
         Account toAccount = getAccountById(toAccountId);
 
         if (fromAccount.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException("Yetersiz bakiye");
+            throw new InsufficientBalanceException(
+                    "Yetersiz bakiye"
+            );
         }
 
         fromAccount.setBalance(
@@ -137,6 +152,18 @@ public class AccountService {
                 toAccount
         );
     }
+    public Account getOwnedAccount(
+            Long accountId,
+            String userEmail
+    ) {
+        Account account = getAccountById(accountId);
 
+        if (!account.getUser().getEmail().equals(userEmail)) {
+            throw new AccountAccessDeniedException(
+                    "Bu hesaba erişim yetkiniz yok"
+            );
+        }
 
+        return account;
+    }
 }

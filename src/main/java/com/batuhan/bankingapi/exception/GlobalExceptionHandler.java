@@ -1,5 +1,6 @@
 package com.batuhan.bankingapi.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -66,6 +67,22 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity
                 .badRequest()
+                .body(Map.of("message", exception.getMessage()));
+    }
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCredentials(
+            InvalidCredentialsException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", exception.getMessage()));
+    }
+    @ExceptionHandler(AccountAccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccountAccessDenied(
+            AccountAccessDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("message", exception.getMessage()));
     }
 }
