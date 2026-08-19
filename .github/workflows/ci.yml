@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_DB: banking_db
           POSTGRES_USER: banking_user
-          POSTGRES_PASSWORD: banking_pass
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
@@ -26,8 +26,8 @@ jobs:
           --health-retries=5
 
     env:
-      DB_PASSWORD: banking_pass
-      JWT_SECRET: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+      DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
 
     steps:
       - name: Checkout repository
