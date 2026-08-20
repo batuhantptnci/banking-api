@@ -13,7 +13,7 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?style=for-the-badge&logo=postgresql)
 ![JWT](https://img.shields.io/badge/Auth-JWT-purple?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=for-the-badge&logo=docker)
-![Tests](https://img.shields.io/badge/Tests-52%20Passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-53%20Passing-success?style=for-the-badge)
 
 ![CI](https://github.com/batuhantptnci/banking-api/actions/workflows/ci.yml/badge.svg)
 
@@ -58,6 +58,8 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 - ✅ Get account details
 - ✅ Account ownership checks
 - ✅ Initial balance: `0.00`
+- ✅ Database row locking for balance-changing operations
+- ✅ Concurrent balance update protection
 
 Example account number:
 
@@ -74,6 +76,8 @@ ACC-A1602ADE
 ```text
 Account
   ↓
+Lock Account 🔒
+  ↓
 + Money
   ↓
 Updated Balance
@@ -83,6 +87,8 @@ Updated Balance
 
 ```text
 Account
+  ↓
+Lock Account 🔒
   ↓
 Balance Check
   ↓
@@ -96,6 +102,8 @@ Updated Balance
 ```text
 Sender Account
       ↓
+Lock Accounts 🔒
+      ↓
    Amount
       ↓
 Receiver Account
@@ -108,6 +116,69 @@ Transfer operations include:
 - ✅ Same-account transfer protection
 - ✅ Atomic database transaction
 - ✅ Transaction history creation
+- ✅ Pessimistic database locking
+- ✅ Deterministic account lock ordering
+- ✅ Reduced deadlock risk
+- ✅ Concurrent balance protection
+
+---
+
+## 🔒 Concurrency Protection
+
+Balance-changing operations use **pessimistic database locking** to prevent concurrent updates from causing inconsistent balances.
+
+Accounts are loaded using:
+
+```text
+PESSIMISTIC_WRITE
+```
+
+This ensures that only one transaction can modify a locked account row at a time.
+
+Example double-withdraw scenario:
+
+```text
+Initial Balance: 1000.00
+
+Thread 1 → Withdraw 800.00 ✅
+Thread 2 → Withdraw 800.00 ❌
+
+Final Balance: 200.00
+```
+
+Without proper concurrency protection, simultaneous requests could potentially read the same balance before either update is committed.
+
+With pessimistic locking:
+
+```text
+Request 1
+   ↓
+Account Locked 🔒
+   ↓
+Balance Updated
+   ↓
+Transaction Committed
+   ↓
+Lock Released
+   ↓
+Request 2
+   ↓
+Reads Latest Balance
+```
+
+Transfers lock both accounts in a deterministic order based on account ID.
+
+Example:
+
+```text
+Transfer 10 → 5
+Lock order: 5 → 10
+
+Transfer 5 → 10
+Lock order: 5 → 10
+```
+
+Using the same lock order reduces the risk of database deadlocks when opposite transfers happen concurrently.
 
 ---
 
@@ -435,7 +506,7 @@ JWT_SECRET=<your_base64_jwt_secret>
 
 # 🧪 Testing
 
-The project contains automated tests for the main business, HTTP and integration layers.
+The project contains automated tests for the main business, HTTP, integration and concurrency layers.
 
 ```text
 AccountServiceTest
@@ -449,6 +520,7 @@ TransactionControllerTest
 
 AuthIntegrationTest
 AccountIntegrationTest
+AccountConcurrencyIntegrationTest
 
 BankingApiApplicationTests
 ```
@@ -456,9 +528,10 @@ BankingApiApplicationTests
 Current status:
 
 ```text
-52 Tests
+53 Tests
 0 Failures
 0 Errors
+0 Skipped
 ✅ BUILD SUCCESS
 ```
 
@@ -485,6 +558,9 @@ Covered scenarios include:
 - ✅ Deposit & withdraw integration
 - ✅ Transfer integration
 - ✅ Transaction history integration
+- ✅ Concurrent withdrawal protection
+- ✅ Pessimistic database locking
+- ✅ Double-withdraw prevention
 
 Run tests:
 
@@ -496,6 +572,12 @@ Windows:
 
 ```powershell
 .\mvnw.cmd test
+```
+
+When environment variables are required:
+
+```powershell
+.\mvnw.cmd "-Dspring.datasource.password=$env:DB_PASSWORD" "-Djwt.secret=$env:JWT_SECRET" test
 ```
 
 ---
@@ -524,7 +606,7 @@ Java 21
    ↓
 Maven Tests
    ↓
-52 Tests ✅
+53 Tests ✅
 ```
 
 CI credentials are stored securely using **GitHub Repository Secrets**.
@@ -543,7 +625,7 @@ Repository
 PostgreSQL
 ```
 
-Additional layers:
+Additional layers and infrastructure:
 
 ```text
 DTO
@@ -553,6 +635,7 @@ JWT Filter
 Security Configuration
 OpenAPI Configuration
 Flyway Migrations
+Pessimistic Database Locking
 ```
 
 ---
@@ -566,6 +649,7 @@ Flyway Migrations
 | 🔐 Spring Security | API security |
 | 🎫 JWT | Authentication |
 | 🗄️ Spring Data JPA | Data access |
+| 🔒 JPA Pessimistic Locking | Concurrency protection |
 | 🐘 PostgreSQL 17 | Database |
 | 🛫 Flyway | Database migrations |
 | 🐳 Docker Compose | Database container |
@@ -614,6 +698,9 @@ src
         └── com.batuhan.bankingapi
             ├── controller
             ├── integration
+            │   ├── AccountIntegrationTest
+            │   ├── AccountConcurrencyIntegrationTest
+            │   └── AuthIntegrationTest
             └── service
 ```
 
@@ -650,6 +737,8 @@ User A → User B's Account ❌
            403 Forbidden
 ```
 
+Balance-changing operations are additionally protected against concurrent updates using database row locks.
+
 ---
 
 # 🚀 Roadmap
@@ -669,12 +758,13 @@ User A → User B's Account ❌
 - [x] Unit Tests
 - [x] Controller Tests
 - [x] Integration Tests
+- [x] Concurrency Integration Test
 - [x] Docker Compose
 - [x] GitHub Actions CI
 - [x] GitHub Secrets
 - [x] Swagger / OpenAPI
 - [x] Flyway Database Migrations
-- [ ] Account Locking / Concurrency Protection
+- [x] Account Locking / Concurrency Protection
 - [ ] Refresh Tokens
 - [ ] Role Based Authorization
 - [ ] Dockerize Spring Boot Application
@@ -715,9 +805,11 @@ Transaction History
 
 **Authentication & Security Completed ✅**
 
-**Automated Tests Completed ✅**
+**Automated Tests Completed — 53 Passing ✅**
 
 **Integration Tests Completed ✅**
+
+**Concurrency Protection Completed ✅**
 
 **Docker Compose Completed ✅**
 
