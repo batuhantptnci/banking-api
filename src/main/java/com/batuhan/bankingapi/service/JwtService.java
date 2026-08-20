@@ -5,6 +5,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.batuhan.bankingapi.entity.Role;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -35,6 +36,18 @@ public class JwtService {
                 .signWith(getSigningKey())
                 .compact();
     }
+    public String generateToken(String email, Role role) {
+        Date now = new Date();
+        Date expirationDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .subject(email)
+                .claim("role", role.name())
+                .issuedAt(now)
+                .expiration(expirationDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
     public String extractEmail(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -55,5 +68,13 @@ public class JwtService {
         } catch (Exception exception) {
             return false;
         }
+    }
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 }

@@ -3,6 +3,7 @@ package com.batuhan.bankingapi.service;
 import com.batuhan.bankingapi.dto.AuthResponse;
 import com.batuhan.bankingapi.dto.CreateUserRequest;
 import com.batuhan.bankingapi.dto.LoginRequest;
+import com.batuhan.bankingapi.entity.Role;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.InvalidCredentialsException;
 import com.batuhan.bankingapi.mapper.UserMapper;
@@ -49,7 +50,10 @@ public class AuthService {
             );
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole()
+        );
 
         return new AuthResponse(
                 token,
@@ -59,10 +63,13 @@ public class AuthService {
     public AuthResponse register(CreateUserRequest request) {
 
         User user = UserMapper.toEntity(request);
-
+        user.setRole(Role.USER);
         User savedUser = userService.saveUser(user);
 
-        String token = jwtService.generateToken(savedUser.getEmail());
+        String token = jwtService.generateToken(
+                savedUser.getEmail(),
+                savedUser.getRole()
+        );
 
         return new AuthResponse(
                 token,

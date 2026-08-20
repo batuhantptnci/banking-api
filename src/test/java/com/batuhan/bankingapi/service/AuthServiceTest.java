@@ -1,6 +1,7 @@
 package com.batuhan.bankingapi.service;
 
 import com.batuhan.bankingapi.dto.LoginRequest;
+import com.batuhan.bankingapi.entity.Role;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.InvalidCredentialsException;
 import com.batuhan.bankingapi.repository.UserRepository;
@@ -14,12 +15,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AuthServiceTest {
 
@@ -61,6 +62,7 @@ public class AuthServiceTest {
         user.setFullName("Test User");
         user.setEmail("test@test.com");
         user.setPassword("$2a$10$fakeHash");
+        user.setRole(Role.USER);
 
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(user));
@@ -70,14 +72,22 @@ public class AuthServiceTest {
                 "$2a$10$fakeHash"
         )).thenReturn(true);
 
-        when(jwtService.generateToken("test@test.com"))
-                .thenReturn("fake-jwt-token");
+        when(jwtService.generateToken(
+                "test@test.com",
+                Role.USER
+        )).thenReturn("fake-jwt-token");
 
         var response = authService.login(request);
 
         assertNotNull(response);
-        verify(jwtService, times(1)).generateToken(any());
+
+        verify(jwtService, times(1))
+                .generateToken(
+                        "test@test.com",
+                        Role.USER
+                );
     }
+
     @Test
     void shouldThrowExceptionWhenPasswordIsWrong() {
 
@@ -88,47 +98,7 @@ public class AuthServiceTest {
         User user = new User();
         user.setEmail("test@test.com");
         user.setPassword("$2a$10$fakeHash");
-
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
-
-        when(passwordEncoder.matches(
-                "wrongPassword",
-                "$2a$10$fakeHash"
-        )).thenReturn(false);
-
-        assertThrows(
-                InvalidCredentialsException.class,
-                () -> authService.login(request)
-        );
-        verify(jwtService, never()).generateToken(any());
-    }
-    @Test
-    void shouldThrowExceptionWhenEmailDoesNotExist() {
-
-        LoginRequest request = new LoginRequest();
-        request.setEmail("notfound@test.com");
-        request.setPassword("12345678");
-
-        when(userRepository.findByEmail("notfound@test.com"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                InvalidCredentialsException.class,
-                () -> authService.login(request)
-        );
-        verify(jwtService, never()).generateToken(any());
-    }
-    @Test
-    void shouldNotGenerateTokenWhenPasswordIsWrong() {
-
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("wrongPassword");
-
-        User user = new User();
-        user.setEmail("test@test.com");
-        user.setPassword("$2a$10$fakeHash");
+        user.setRole(Role.USER);
 
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(user));
@@ -144,8 +114,66 @@ public class AuthServiceTest {
         );
 
         verify(jwtService, never())
-                .generateToken(anyString());
+                .generateToken(
+                        anyString(),
+                        any(Role.class)
+                );
     }
+
+    @Test
+    void shouldThrowExceptionWhenEmailDoesNotExist() {
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("notfound@test.com");
+        request.setPassword("12345678");
+
+        when(userRepository.findByEmail("notfound@test.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> authService.login(request)
+        );
+
+        verify(jwtService, never())
+                .generateToken(
+                        anyString(),
+                        any(Role.class)
+                );
+    }
+
+    @Test
+    void shouldNotGenerateTokenWhenPasswordIsWrong() {
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("test@test.com");
+        request.setPassword("wrongPassword");
+
+        User user = new User();
+        user.setEmail("test@test.com");
+        user.setPassword("$2a$10$fakeHash");
+        user.setRole(Role.USER);
+
+        when(userRepository.findByEmail("test@test.com"))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(
+                "wrongPassword",
+                "$2a$10$fakeHash"
+        )).thenReturn(false);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> authService.login(request)
+        );
+
+        verify(jwtService, never())
+                .generateToken(
+                        anyString(),
+                        any(Role.class)
+                );
+    }
+
     @Test
     void shouldGenerateTokenOnceWhenLoginIsSuccessful() {
 
@@ -156,6 +184,7 @@ public class AuthServiceTest {
         User user = new User();
         user.setEmail("test@test.com");
         user.setPassword("$2a$10$fakeHash");
+        user.setRole(Role.USER);
 
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(user));
@@ -165,11 +194,17 @@ public class AuthServiceTest {
                 "$2a$10$fakeHash"
         )).thenReturn(true);
 
-        when(jwtService.generateToken("test@test.com"))
-                .thenReturn("fake-jwt-token");
+        when(jwtService.generateToken(
+                "test@test.com",
+                Role.USER
+        )).thenReturn("fake-jwt-token");
 
         authService.login(request);
 
-        verify(jwtService).generateToken("test@test.com");
+        verify(jwtService, times(1))
+                .generateToken(
+                        "test@test.com",
+                        Role.USER
+                );
     }
 }
