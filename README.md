@@ -4,7 +4,7 @@
 
 ### Modern, Secure & Tested Banking Backend
 
-A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **PostgreSQL**, **JWT Authentication**, **Flyway**, **Docker Compose** and **GitHub Actions**.
+A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **PostgreSQL**, **JWT Authentication**, **Role-Based Authorization**, **Flyway**, **Docker Compose** and **GitHub Actions**.
 
 <br>
 
@@ -13,7 +13,7 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?style=for-the-badge&logo=postgresql)
 ![JWT](https://img.shields.io/badge/Auth-JWT-purple?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=for-the-badge&logo=docker)
-![Tests](https://img.shields.io/badge/Tests-53%20Passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-55%20Passing-success?style=for-the-badge)
 
 ![CI](https://github.com/batuhantptnci/banking-api/actions/workflows/ci.yml/badge.svg)
 
@@ -30,10 +30,14 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 - ✅ BCrypt password hashing
 - ✅ JWT token generation
 - ✅ JWT token validation
+- ✅ JWT role claims
 - ✅ Stateless authentication
 - ✅ Protected API endpoints
+- ✅ Role-based authorization
+- ✅ `USER` and `ADMIN` roles
 - ✅ Account ownership validation
 - ✅ Unauthorized access protection
+- ✅ Admin-only user management endpoints
 - ✅ Secure Swagger authorization
 
 ---
@@ -47,6 +51,33 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 - ✅ Email uniqueness validation
 - ✅ Request validation
 - ✅ Secure password storage
+- ✅ Automatic `USER` role on registration
+- ✅ Admin-only user management
+
+Available roles:
+
+```text
+USER
+ADMIN
+```
+
+Newly registered users automatically receive:
+
+```text
+ROLE_USER
+```
+
+User management endpoints under:
+
+```text
+/api/users/**
+```
+
+require:
+
+```text
+ROLE_ADMIN
+```
 
 ---
 
@@ -228,6 +259,15 @@ Current migrations:
 ```text
 V1__initial_schema.sql
 V2__add_transaction_created_at_index.sql
+V3__add_role_to_users.sql
+```
+
+Migration responsibilities:
+
+```text
+V1 → Initial users, accounts and transactions schema
+V2 → Transaction created_at index
+V3 → USER / ADMIN role support
 ```
 
 Hibernate is configured with:
@@ -254,10 +294,16 @@ Flyway manages schema changes while Hibernate validates that the database matche
        │
        ▼
 ┌──────────────┐
-│ JWT Created  │
+│ Role = USER  │
 └──────┬───────┘
        │
        ▼
+┌─────────────────┐
+│ JWT Created     │
+│ email + role    │
+└────────┬────────┘
+         │
+         ▼
 ┌─────────────────────┐
 │ Authorization Header│
 │ Bearer <JWT_TOKEN>  │
@@ -265,8 +311,32 @@ Flyway manages schema changes while Hibernate validates that the database matche
           │
           ▼
 ┌─────────────────────┐
+│ JWT Auth Filter     │
+│ ROLE_USER / ADMIN   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
 │ Protected Endpoints │
 └─────────────────────┘
+```
+
+JWT payload contains the user's email and role.
+
+Example:
+
+```json
+{
+  "sub": "test@test.com",
+  "role": "USER"
+}
+```
+
+Spring Security converts the role into an authority:
+
+```text
+USER  → ROLE_USER
+ADMIN → ROLE_ADMIN
 ```
 
 ---
@@ -290,6 +360,8 @@ Example:
   "password": "12345678"
 }
 ```
+
+Registered users automatically receive the `USER` role.
 
 ---
 
@@ -319,6 +391,27 @@ Response:
     "email": "test@test.com"
   }
 }
+```
+
+---
+
+## 👤 User Management
+
+```http
+/api/users/**
+```
+
+User management endpoints require:
+
+```text
+ROLE_ADMIN
+```
+
+Authorization behavior:
+
+```text
+USER  → /api/users/** → 403 Forbidden ❌
+ADMIN → /api/users/** → Allowed ✅
 ```
 
 ---
@@ -439,6 +532,17 @@ Swagger automatically sends:
 Authorization: Bearer <JWT_TOKEN>
 ```
 
+Endpoint authorization still depends on the role stored in the JWT.
+
+Example:
+
+```text
+ROLE_USER  → Account operations ✅
+ROLE_USER  → User management ❌
+
+ROLE_ADMIN → User management ✅
+```
+
 ---
 
 # 🐳 Docker Compose
@@ -506,7 +610,7 @@ JWT_SECRET=<your_base64_jwt_secret>
 
 # 🧪 Testing
 
-The project contains automated tests for the main business, HTTP, integration and concurrency layers.
+The project contains automated tests for the main business, HTTP, integration, concurrency and authorization layers.
 
 ```text
 AccountServiceTest
@@ -521,6 +625,7 @@ TransactionControllerTest
 AuthIntegrationTest
 AccountIntegrationTest
 AccountConcurrencyIntegrationTest
+RoleAuthorizationIntegrationTest
 
 BankingApiApplicationTests
 ```
@@ -528,7 +633,7 @@ BankingApiApplicationTests
 Current status:
 
 ```text
-53 Tests
+55 Tests
 0 Failures
 0 Errors
 0 Skipped
@@ -561,6 +666,10 @@ Covered scenarios include:
 - ✅ Concurrent withdrawal protection
 - ✅ Pessimistic database locking
 - ✅ Double-withdraw prevention
+- ✅ JWT role claims
+- ✅ USER / ADMIN authorization
+- ✅ USER restriction from admin endpoints
+- ✅ ADMIN access to user management endpoints
 
 Run tests:
 
@@ -606,7 +715,7 @@ Java 21
    ↓
 Maven Tests
    ↓
-53 Tests ✅
+55 Tests ✅
 ```
 
 CI credentials are stored securely using **GitHub Repository Secrets**.
@@ -625,6 +734,22 @@ Repository
 PostgreSQL
 ```
 
+Security flow:
+
+```text
+Request
+   ↓
+JWT Auth Filter
+   ↓
+Token Validation
+   ↓
+Role Extraction
+   ↓
+Spring Security Authority
+   ↓
+Endpoint Authorization
+```
+
 Additional layers and infrastructure:
 
 ```text
@@ -633,6 +758,7 @@ Mapper
 Exception Handler
 JWT Filter
 Security Configuration
+Role-Based Authorization
 OpenAPI Configuration
 Flyway Migrations
 Pessimistic Database Locking
@@ -646,8 +772,9 @@ Pessimistic Database Locking
 |---|---|
 | ☕ Java 21 | Backend language |
 | 🍃 Spring Boot 4.1 | Application framework |
-| 🔐 Spring Security | API security |
-| 🎫 JWT | Authentication |
+| 🔐 Spring Security | Authentication & authorization |
+| 🎫 JWT | Stateless authentication |
+| 👥 Role-Based Authorization | USER / ADMIN access control |
 | 🗄️ Spring Data JPA | Data access |
 | 🔒 JPA Pessimistic Locking | Concurrency protection |
 | 🐘 PostgreSQL 17 | Database |
@@ -682,6 +809,12 @@ src
 │   │       │
 │   │       ├── dto
 │   │       ├── entity
+│   │       │   ├── Account
+│   │       │   ├── Role
+│   │       │   ├── Transaction
+│   │       │   ├── TransactionType
+│   │       │   └── User
+│   │       │
 │   │       ├── exception
 │   │       ├── mapper
 │   │       ├── repository
@@ -691,16 +824,18 @@ src
 │       └── db
 │           └── migration
 │               ├── V1__initial_schema.sql
-│               └── V2__add_transaction_created_at_index.sql
+│               ├── V2__add_transaction_created_at_index.sql
+│               └── V3__add_role_to_users.sql
 │
 └── test
     └── java
         └── com.batuhan.bankingapi
             ├── controller
             ├── integration
-            │   ├── AccountIntegrationTest
             │   ├── AccountConcurrencyIntegrationTest
-            │   └── AuthIntegrationTest
+            │   ├── AccountIntegrationTest
+            │   ├── AuthIntegrationTest
+            │   └── RoleAuthorizationIntegrationTest
             └── service
 ```
 
@@ -722,10 +857,30 @@ README.md
 /swagger-ui/**      → PUBLIC
 /v3/api-docs/**     → PUBLIC
 
+/api/users/**       → ROLE_ADMIN REQUIRED 👑
+
 All other endpoints → JWT REQUIRED 🔒
 ```
 
-Accounts are protected by ownership checks.
+Role authorization:
+
+```text
+USER
+ ↓
+ROLE_USER
+ ↓
+Accounts / Transactions ✅
+User Management ❌
+
+
+ADMIN
+ ↓
+ROLE_ADMIN
+ ↓
+User Management ✅
+```
+
+Accounts are additionally protected by ownership checks.
 
 Example:
 
@@ -737,7 +892,7 @@ User A → User B's Account ❌
            403 Forbidden
 ```
 
-Balance-changing operations are additionally protected against concurrent updates using database row locks.
+Balance-changing operations are protected against concurrent updates using database row locks.
 
 ---
 
@@ -755,9 +910,12 @@ Balance-changing operations are additionally protected against concurrent update
 - [x] Login / Register
 - [x] JWT Authentication
 - [x] Account Authorization
+- [x] Role Based Authorization
+- [x] USER / ADMIN Roles
 - [x] Unit Tests
 - [x] Controller Tests
 - [x] Integration Tests
+- [x] Authorization Integration Tests
 - [x] Concurrency Integration Test
 - [x] Docker Compose
 - [x] GitHub Actions CI
@@ -766,7 +924,6 @@ Balance-changing operations are additionally protected against concurrent update
 - [x] Flyway Database Migrations
 - [x] Account Locking / Concurrency Protection
 - [ ] Refresh Tokens
-- [ ] Role Based Authorization
 - [ ] Dockerize Spring Boot Application
 - [ ] Deployment
 - [ ] Flutter Mobile Application
@@ -793,6 +950,8 @@ Money Transfer
 Transaction History
 ```
 
+The mobile client will authenticate using JWT tokens and respect the authorization rules defined by the backend.
+
 ---
 
 <div align="center">
@@ -805,7 +964,9 @@ Transaction History
 
 **Authentication & Security Completed ✅**
 
-**Automated Tests Completed — 53 Passing ✅**
+**Role-Based Authorization Completed ✅**
+
+**Automated Tests Completed — 55 Passing ✅**
 
 **Integration Tests Completed ✅**
 
@@ -818,6 +979,12 @@ Transaction History
 **Swagger Documentation Completed ✅**
 
 **Flyway Database Migrations Completed ✅**
+
+<br>
+
+### Next Step
+
+**Refresh Token Support 🔄**
 
 <br>
 
