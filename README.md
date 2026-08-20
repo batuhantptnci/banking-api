@@ -4,7 +4,7 @@
 
 ### Modern, Secure & Tested Banking Backend
 
-A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **PostgreSQL**, **JWT Authentication**, **Docker Compose** and **GitHub Actions**.
+A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **PostgreSQL**, **JWT Authentication**, **Flyway**, **Docker Compose** and **GitHub Actions**.
 
 <br>
 
@@ -13,7 +13,7 @@ A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **Po
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?style=for-the-badge&logo=postgresql)
 ![JWT](https://img.shields.io/badge/Auth-JWT-purple?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Compose-blue?style=for-the-badge&logo=docker)
-![Tests](https://img.shields.io/badge/Tests-45%20Passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-52%20Passing-success?style=for-the-badge)
 
 ![CI](https://github.com/batuhantptnci/banking-api/actions/workflows/ci.yml/badge.svg)
 
@@ -145,6 +145,27 @@ Example:
 ```
 
 Transactions are returned from newest to oldest.
+
+---
+
+## 🗃️ Database Migrations
+
+Database schema changes are managed with **Flyway**.
+
+Current migrations:
+
+```text
+V1__initial_schema.sql
+V2__add_transaction_created_at_index.sql
+```
+
+Hibernate is configured with:
+
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+Flyway manages schema changes while Hibernate validates that the database matches the entities.
 
 ---
 
@@ -414,7 +435,7 @@ JWT_SECRET=<your_base64_jwt_secret>
 
 # 🧪 Testing
 
-The project contains automated tests for the main business and HTTP layers.
+The project contains automated tests for the main business, HTTP and integration layers.
 
 ```text
 AccountServiceTest
@@ -426,13 +447,16 @@ AuthControllerTest
 AccountControllerTest
 TransactionControllerTest
 
+AuthIntegrationTest
+AccountIntegrationTest
+
 BankingApiApplicationTests
 ```
 
 Current status:
 
 ```text
-45 Tests
+52 Tests
 0 Failures
 0 Errors
 ✅ BUILD SUCCESS
@@ -455,6 +479,12 @@ Covered scenarios include:
 - ✅ Request validation
 - ✅ HTTP status codes
 - ✅ Controller responses
+- ✅ Full register & login flow
+- ✅ JWT protected endpoint integration
+- ✅ Account creation integration
+- ✅ Deposit & withdraw integration
+- ✅ Transfer integration
+- ✅ Transaction history integration
 
 Run tests:
 
@@ -488,11 +518,13 @@ GitHub Actions
    ↓
 PostgreSQL 17
    ↓
+Flyway Migrations
+   ↓
 Java 21
    ↓
 Maven Tests
    ↓
-45 Tests ✅
+52 Tests ✅
 ```
 
 CI credentials are stored securely using **GitHub Repository Secrets**.
@@ -520,6 +552,7 @@ Exception Handler
 JWT Filter
 Security Configuration
 OpenAPI Configuration
+Flyway Migrations
 ```
 
 ---
@@ -534,6 +567,7 @@ OpenAPI Configuration
 | 🎫 JWT | Authentication |
 | 🗄️ Spring Data JPA | Data access |
 | 🐘 PostgreSQL 17 | Database |
+| 🛫 Flyway | Database migrations |
 | 🐳 Docker Compose | Database container |
 | 📚 Swagger / OpenAPI | API documentation |
 | 🧪 JUnit | Testing |
@@ -549,30 +583,37 @@ OpenAPI Configuration
 ```text
 src
 ├── main
-│   └── java
-│       └── com.batuhan.bankingapi
-│           ├── config
-│           │   ├── JwtAuthFilter
-│           │   ├── OpenApiConfig
-│           │   └── SecurityConfig
-│           │
-│           ├── controller
-│           │   ├── AccountController
-│           │   ├── AuthController
-│           │   ├── TransactionController
-│           │   └── UserController
-│           │
-│           ├── dto
-│           ├── entity
-│           ├── exception
-│           ├── mapper
-│           ├── repository
-│           └── service
+│   ├── java
+│   │   └── com.batuhan.bankingapi
+│   │       ├── config
+│   │       │   ├── JwtAuthFilter
+│   │       │   ├── OpenApiConfig
+│   │       │   └── SecurityConfig
+│   │       │
+│   │       ├── controller
+│   │       │   ├── AccountController
+│   │       │   ├── AuthController
+│   │       │   ├── TransactionController
+│   │       │   └── UserController
+│   │       │
+│   │       ├── dto
+│   │       ├── entity
+│   │       ├── exception
+│   │       ├── mapper
+│   │       ├── repository
+│   │       └── service
+│   │
+│   └── resources
+│       └── db
+│           └── migration
+│               ├── V1__initial_schema.sql
+│               └── V2__add_transaction_created_at_index.sql
 │
 └── test
     └── java
         └── com.batuhan.bankingapi
             ├── controller
+            ├── integration
             └── service
 ```
 
@@ -627,12 +668,12 @@ User A → User B's Account ❌
 - [x] Account Authorization
 - [x] Unit Tests
 - [x] Controller Tests
+- [x] Integration Tests
 - [x] Docker Compose
 - [x] GitHub Actions CI
 - [x] GitHub Secrets
 - [x] Swagger / OpenAPI
-- [ ] Integration Tests
-- [ ] Database Migrations
+- [x] Flyway Database Migrations
 - [ ] Account Locking / Concurrency Protection
 - [ ] Refresh Tokens
 - [ ] Role Based Authorization
@@ -676,11 +717,15 @@ Transaction History
 
 **Automated Tests Completed ✅**
 
+**Integration Tests Completed ✅**
+
 **Docker Compose Completed ✅**
 
 **Continuous Integration Completed ✅**
 
 **Swagger Documentation Completed ✅**
+
+**Flyway Database Migrations Completed ✅**
 
 <br>
 
