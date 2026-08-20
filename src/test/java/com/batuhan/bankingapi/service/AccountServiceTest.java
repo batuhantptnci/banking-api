@@ -1,17 +1,16 @@
 package com.batuhan.bankingapi.service;
 
+import com.batuhan.bankingapi.entity.Account;
 import com.batuhan.bankingapi.entity.TransactionType;
+import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.AccountAccessDeniedException;
 import com.batuhan.bankingapi.exception.InsufficientBalanceException;
 import com.batuhan.bankingapi.exception.InvalidTransferException;
 import com.batuhan.bankingapi.repository.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import com.batuhan.bankingapi.entity.Account;
-import com.batuhan.bankingapi.entity.User;
-import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -44,6 +43,7 @@ public class AccountServiceTest {
                 transactionService
         );
     }
+
     @Test
     void shouldDepositMoneySuccessfully() {
 
@@ -55,7 +55,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("100.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         when(accountRepository.save(account))
@@ -72,6 +72,7 @@ public class AccountServiceTest {
                 result.getBalance()
         );
     }
+
     @Test
     void shouldWithdrawMoneySuccessfully() {
 
@@ -83,7 +84,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("600.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         when(accountRepository.save(account))
@@ -100,6 +101,7 @@ public class AccountServiceTest {
                 result.getBalance()
         );
     }
+
     @Test
     void shouldThrowExceptionWhenBalanceIsInsufficient() {
 
@@ -111,7 +113,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("100.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         assertThrows(
@@ -123,6 +125,7 @@ public class AccountServiceTest {
                 )
         );
     }
+
     @Test
     void shouldThrowExceptionWhenUserDoesNotOwnAccount() {
 
@@ -134,7 +137,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("500.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         assertThrows(
@@ -146,6 +149,7 @@ public class AccountServiceTest {
                 )
         );
     }
+
     @Test
     void shouldTransferMoneySuccessfully() {
 
@@ -165,10 +169,10 @@ public class AccountServiceTest {
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
 
-        when(accountRepository.findById(2L))
+        when(accountRepository.findByIdForUpdate(2L))
                 .thenReturn(Optional.of(receiverAccount));
 
         accountService.transfer(
@@ -188,6 +192,7 @@ public class AccountServiceTest {
                 receiverAccount.getBalance()
         );
     }
+
     @Test
     void shouldNotTransferWhenBalanceIsInsufficient() {
 
@@ -207,10 +212,10 @@ public class AccountServiceTest {
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
 
-        when(accountRepository.findById(2L))
+        when(accountRepository.findByIdForUpdate(2L))
                 .thenReturn(Optional.of(receiverAccount));
 
         assertThrows(
@@ -233,6 +238,7 @@ public class AccountServiceTest {
                 receiverAccount.getBalance()
         );
     }
+
     @Test
     void shouldThrowExceptionWhenTransferringToSameAccount() {
 
@@ -246,19 +252,31 @@ public class AccountServiceTest {
                 )
         );
     }
+
     @Test
     void shouldThrowExceptionWhenTransferringFromAnotherUsersAccount() {
 
         User owner = new User();
         owner.setEmail("owner@test.com");
 
+        User receiverUser = new User();
+        receiverUser.setEmail("receiver@test.com");
+
         Account senderAccount = new Account();
         senderAccount.setId(1L);
         senderAccount.setBalance(new BigDecimal("1000.00"));
         senderAccount.setUser(owner);
 
-        when(accountRepository.findById(1L))
+        Account receiverAccount = new Account();
+        receiverAccount.setId(2L);
+        receiverAccount.setBalance(new BigDecimal("200.00"));
+        receiverAccount.setUser(receiverUser);
+
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
+
+        when(accountRepository.findByIdForUpdate(2L))
+                .thenReturn(Optional.of(receiverAccount));
 
         assertThrows(
                 AccountAccessDeniedException.class,
@@ -275,6 +293,7 @@ public class AccountServiceTest {
                 senderAccount.getBalance()
         );
     }
+
     @Test
     void shouldCreateTransactionWhenDepositingMoney() {
 
@@ -286,7 +305,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("100.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         when(accountRepository.save(account))
@@ -305,6 +324,7 @@ public class AccountServiceTest {
                 null
         );
     }
+
     @Test
     void shouldCreateTransactionWhenWithdrawingMoney() {
 
@@ -316,7 +336,7 @@ public class AccountServiceTest {
         account.setBalance(new BigDecimal("600.00"));
         account.setUser(user);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(account));
 
         when(accountRepository.save(account))
@@ -335,6 +355,7 @@ public class AccountServiceTest {
                 null
         );
     }
+
     @Test
     void shouldCreateTransactionWhenTransferringMoney() {
 
@@ -354,10 +375,10 @@ public class AccountServiceTest {
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
 
-        when(accountRepository.findById(1L))
+        when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
 
-        when(accountRepository.findById(2L))
+        when(accountRepository.findByIdForUpdate(2L))
                 .thenReturn(Optional.of(receiverAccount));
 
         accountService.transfer(

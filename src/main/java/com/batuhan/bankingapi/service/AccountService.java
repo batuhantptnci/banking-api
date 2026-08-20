@@ -62,7 +62,7 @@ public class AccountService {
             BigDecimal amount,
             String userEmail
     ) {
-        Account account = getOwnedAccount(accountId, userEmail);
+        Account account = getOwnedAccountForUpdate(accountId, userEmail);
 
         BigDecimal newBalance = account.getBalance().add(amount);
         account.setBalance(newBalance);
@@ -84,7 +84,7 @@ public class AccountService {
             BigDecimal amount,
             String userEmail
     ) {
-        Account account = getOwnedAccount(accountId, userEmail);
+        Account account = getOwnedAccountForUpdate(accountId, userEmail);
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientBalanceException("Yetersiz bakiye");
@@ -112,31 +112,33 @@ public class AccountService {
             String userEmail
     ) {
         if (fromAccountId.equals(toAccountId)) {
-            throw new InvalidTransferException(
-                    "Gönderen ve alıcı hesap aynı olamaz"
-            );
+            throw new InvalidTransferException("Gönderen ve alıcı hesap aynı olamaz");
         }
 
-        Account fromAccount = getOwnedAccount(
-                fromAccountId,
-                userEmail
-        );
+        Long firstId = Math.min(fromAccountId, toAccountId);
+        Long secondId = Math.max(fromAccountId, toAccountId);
 
-        Account toAccount = getAccountById(toAccountId);
+        Account firstAccount = getAccountForUpdate(firstId);
+        Account secondAccount = getAccountForUpdate(secondId);
+
+        Account fromAccount = fromAccountId.equals(firstId)
+                ? firstAccount
+                : secondAccount;
+
+        Account toAccount = toAccountId.equals(firstId)
+                ? firstAccount
+                : secondAccount;
+
+        if (!fromAccount.getUser().getEmail().equals(userEmail)) {
+            throw new AccountAccessDeniedException("Bu hesaba erişim yetkiniz yok");
+        }
 
         if (fromAccount.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException(
-                    "Yetersiz bakiye"
-            );
+            throw new InsufficientBalanceException("Yetersiz bakiye");
         }
 
-        fromAccount.setBalance(
-                fromAccount.getBalance().subtract(amount)
-        );
-
-        toAccount.setBalance(
-                toAccount.getBalance().add(amount)
-        );
+        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+        toAccount.setBalance(toAccount.getBalance().add(amount));
 
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
@@ -161,5 +163,19 @@ public class AccountService {
         }
 
         return account;
+    }
+    public Account getOwnedAccountForUpdate(Long accountId, String userEmail) {
+        Account account = accountRepository.findByIdForUpdate(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Hesap bulunamadı"));
+
+        if (!account.getUser().getEmail().equals(userEmail)) {
+            throw new AccountAccessDeniedException("Bu hesaba erişim yetkiniz yok");
+        }
+
+        return account;
+    }
+    public Account getAccountForUpdate(Long accountId) {
+        return accountRepository.findByIdForUpdate(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Hesap bulunamadı"));
     }
 }
