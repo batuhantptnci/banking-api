@@ -3,11 +3,15 @@ package com.batuhan.bankingapi.service;
 import com.batuhan.bankingapi.dto.AuthResponse;
 import com.batuhan.bankingapi.dto.CreateUserRequest;
 import com.batuhan.bankingapi.dto.LoginRequest;
+import com.batuhan.bankingapi.entity.RefreshToken;
 import com.batuhan.bankingapi.entity.Role;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.InvalidCredentialsException;
 import com.batuhan.bankingapi.mapper.UserMapper;
 import com.batuhan.bankingapi.repository.UserRepository;
+import com.batuhan.bankingapi.dto.RefreshTokenRequest;
+import com.batuhan.bankingapi.entity.RefreshToken;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +23,19 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            UserService userService
+            UserService userService, RefreshTokenService refreshTokenService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userService = userService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -55,8 +61,12 @@ public class AuthService {
                 user.getRole()
         );
 
+        RefreshToken refreshToken =
+                refreshTokenService.createRefreshToken(user);
+
         return new AuthResponse(
                 token,
+                refreshToken.getToken(),
                 UserMapper.toResponse(user)
         );
     }
@@ -64,6 +74,7 @@ public class AuthService {
 
         User user = UserMapper.toEntity(request);
         user.setRole(Role.USER);
+
         User savedUser = userService.saveUser(user);
 
         String token = jwtService.generateToken(
@@ -71,9 +82,39 @@ public class AuthService {
                 savedUser.getRole()
         );
 
+        RefreshToken refreshToken =
+                refreshTokenService.createRefreshToken(savedUser);
+
         return new AuthResponse(
                 token,
-                UserMapper.toResponse(savedUser)
+                refreshToken.getToken(),
+                UserMapper.toResponse(user)
+        );
+    }
+    @Transactional
+    public AuthResponse refresh(RefreshTokenRequest request) {
+
+        RefreshToken oldRefreshToken =
+                refreshTokenService.validateRefreshToken(
+                        request.getRefreshToken()
+                );
+
+        User user = oldRefreshToken.getUser();
+
+        refreshTokenService.deleteRefreshToken(oldRefreshToken);
+
+        String newAccessToken = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole()
+        );
+
+        RefreshToken newRefreshToken =
+                refreshTokenService.createRefreshToken(user);
+
+        return new AuthResponse(
+                newAccessToken,
+                newRefreshToken.getToken(),
+                UserMapper.toResponse(user)
         );
     }
 }

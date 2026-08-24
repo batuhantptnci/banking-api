@@ -1,6 +1,7 @@
 package com.batuhan.bankingapi.service;
 
 import com.batuhan.bankingapi.dto.LoginRequest;
+import com.batuhan.bankingapi.entity.RefreshToken;
 import com.batuhan.bankingapi.entity.Role;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.InvalidCredentialsException;
@@ -36,6 +37,9 @@ public class AuthServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private AuthService authService;
 
     @BeforeEach
@@ -46,7 +50,8 @@ public class AuthServiceTest {
                 userRepository,
                 passwordEncoder,
                 jwtService,
-                userService
+                userService,
+                refreshTokenService
         );
     }
 
@@ -64,6 +69,9 @@ public class AuthServiceTest {
         user.setPassword("$2a$10$fakeHash");
         user.setRole(Role.USER);
 
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("fake-refresh-token");
+
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(user));
 
@@ -77,15 +85,23 @@ public class AuthServiceTest {
                 Role.USER
         )).thenReturn("fake-jwt-token");
 
+        when(refreshTokenService.createRefreshToken(user))
+                .thenReturn(refreshToken);
+
         var response = authService.login(request);
 
         assertNotNull(response);
+        assertNotNull(response.getToken());
+        assertNotNull(response.getRefreshToken());
 
         verify(jwtService, times(1))
                 .generateToken(
                         "test@test.com",
                         Role.USER
                 );
+
+        verify(refreshTokenService, times(1))
+                .createRefreshToken(user);
     }
 
     @Test
@@ -118,6 +134,9 @@ public class AuthServiceTest {
                         anyString(),
                         any(Role.class)
                 );
+
+        verify(refreshTokenService, never())
+                .createRefreshToken(any(User.class));
     }
 
     @Test
@@ -140,6 +159,9 @@ public class AuthServiceTest {
                         anyString(),
                         any(Role.class)
                 );
+
+        verify(refreshTokenService, never())
+                .createRefreshToken(any(User.class));
     }
 
     @Test
@@ -172,6 +194,9 @@ public class AuthServiceTest {
                         anyString(),
                         any(Role.class)
                 );
+
+        verify(refreshTokenService, never())
+                .createRefreshToken(any(User.class));
     }
 
     @Test
@@ -186,6 +211,9 @@ public class AuthServiceTest {
         user.setPassword("$2a$10$fakeHash");
         user.setRole(Role.USER);
 
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("fake-refresh-token");
+
         when(userRepository.findByEmail("test@test.com"))
                 .thenReturn(Optional.of(user));
 
@@ -199,6 +227,9 @@ public class AuthServiceTest {
                 Role.USER
         )).thenReturn("fake-jwt-token");
 
+        when(refreshTokenService.createRefreshToken(user))
+                .thenReturn(refreshToken);
+
         authService.login(request);
 
         verify(jwtService, times(1))
@@ -206,5 +237,8 @@ public class AuthServiceTest {
                         "test@test.com",
                         Role.USER
                 );
+
+        verify(refreshTokenService, times(1))
+                .createRefreshToken(user);
     }
 }

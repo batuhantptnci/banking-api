@@ -4,6 +4,7 @@ import com.batuhan.bankingapi.dto.AuthResponse;
 import com.batuhan.bankingapi.dto.CreateUserRequest;
 import com.batuhan.bankingapi.dto.LoginRequest;
 import com.batuhan.bankingapi.service.AuthService;
+import com.batuhan.bankingapi.dto.RefreshTokenRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,5 +39,13 @@ public class AuthController {
         return ResponseEntity
                 .status(201)
                 .body(response);
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        return ResponseEntity.ok(
+                authService.refresh(request)
+        );
     }
 }
