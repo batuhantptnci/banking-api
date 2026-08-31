@@ -49,7 +49,8 @@ public class AuthServiceTest {
                 passwordEncoder,
                 jwtService,
                 userService,
-                refreshTokenService
+                refreshTokenService,
+                accountService
         );
     }
 

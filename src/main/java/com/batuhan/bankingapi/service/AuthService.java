@@ -22,19 +22,22 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
+    private final AccountService accountService;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             UserService userService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            AccountService accountService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
+        this.accountService = accountService;
     }
 
     public AuthResponse login(
@@ -84,10 +87,8 @@ public class AuthService {
                 UserMapper.toResponse(user)
         );
     }
-
-    public AuthResponse register(
-            CreateUserRequest request
-    ) {
+    @Transactional
+    public AuthResponse register(CreateUserRequest request) {
 
         User user =
                 UserMapper.toEntity(request);
@@ -96,6 +97,7 @@ public class AuthService {
 
         User savedUser =
                 userService.saveUser(user);
+        accountService.createDefaultAccount(savedUser);
 
         String token =
                 jwtService.generateToken(

@@ -13,6 +13,7 @@ import com.batuhan.bankingapi.exception.InvalidTransferException;
 import com.batuhan.bankingapi.entity.TransactionType;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.UUID;
 import java.util.List;
 
@@ -177,5 +178,21 @@ public class AccountService {
     public Account getAccountForUpdate(Long accountId) {
         return accountRepository.findByIdForUpdate(accountId)
                 .orElseThrow(() -> new AccountNotFoundException("Hesap bulunamadı"));
+    }
+    public Account createDefaultAccount(User user) {
+
+        Account account = new Account();
+
+        account.setAccountNumber(
+                "ACC-" + UUID.randomUUID()
+                        .toString()
+                        .substring(0, 8)
+                        .toUpperCase()
+        );
+
+        account.setBalance(BigDecimal.ZERO);
+        account.setUser(user);
+
+        return accountRepository.save(account);
     }
 }
