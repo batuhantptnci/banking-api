@@ -1,95 +1,187 @@
 # Banking API 🏦
 
-A portfolio-grade banking REST API built with **Java 21**, **Spring Boot**, **PostgreSQL**, **Spring Security**, **JWT**, **Flyway** and **Docker**.
+**Java 21** • **Spring Boot 4.1.0** • **PostgreSQL 17** • **JWT** • **Flyway** • **Docker**
 
-The project focuses on real-world backend concepts such as secure authentication, account ownership, money transfers, transaction history, database migrations, concurrency protection and automated CI testing.
+![CI](../../actions/workflows/ci.yml/badge.svg)
+
+A portfolio-grade banking backend application built with **Java 21, Spring Boot, PostgreSQL, Spring Security, JWT, Flyway and Docker**.
+
+The project demonstrates real-world backend concepts including secure customer authentication, role-based authorization, account ownership, money transfers, transaction history, database migrations, concurrency protection, refresh token rotation and automated CI testing.
 
 ---
 
 ## 🚀 Features
 
 ### 🔐 Authentication & Security
+
 - Customer registration
-- Login with **8-digit customer number or 11-digit Turkish National ID**
+- Login with **8-digit customer number**
+- Login with **11-digit Turkish National ID**
 - Automatically generated unique customer number
 - BCrypt password hashing
 - JWT access token authentication
+- Refresh token authentication
 - Refresh token rotation
+- Refresh token reuse prevention
 - SHA-256 hashed refresh token storage
-- Refresh token reuse protection
+- Concurrent refresh token protection
 - Stateless Spring Security
-- Role-based authorization with `USER` and `ADMIN`
+- Role-Based Authorization
+- `USER` and `ADMIN` roles
 - Admin-only user management endpoints
 
 ### 👤 Customer Management
-- Full name, National ID, phone and email validation
-- Unique email, National ID, phone and customer number
-- Automatic `USER` role assignment during registration
-- Admin-protected user CRUD operations
+
+- Full name validation
+- National ID validation
+- Phone number validation
+- Email validation
+- Unique customer number
+- Unique National ID
+- Unique phone number
+- Unique email
+- Automatic `USER` role assignment
+- Admin-protected user management
 
 ### 💳 Account Management
-- A default account is created automatically after customer registration
+
+- Automatic default account creation after registration
 - Automatically generated account numbers
 - New accounts start with `0.00` balance
+- Create additional bank accounts
 - View authenticated customer's accounts
+- View account details
 - Account ownership validation
-- Deposit and withdraw operations
-- Pessimistic locking for critical balance updates
+- Deposit money
+- Withdraw money
+- Balance validation
+- Pessimistic database locking
 
 ### 💸 Transactions
+
 - Deposit
 - Withdraw
 - Transfer between accounts
 - Transaction history
-- Insufficient balance protection
 - Sender ownership validation
-- Deterministic account locking to reduce deadlock risk
+- Insufficient balance protection
 - Concurrent transaction protection
+- Deterministic account locking during transfers
 
-### 🗄 Database & Infrastructure
+### 🗄 Database
+
 - PostgreSQL 17
-- Spring Data JPA / Hibernate
-- Flyway database migrations
+- Spring Data JPA
+- Hibernate
+- Flyway migrations
+- Database constraints
+- Unique indexes
+- Foreign keys
+- Transaction indexes
 - Schema validation
-- Database constraints and indexes
-- Docker Compose
-- Swagger / OpenAPI
 
 ### 🧪 Testing & CI
+
 - Unit tests
-- Service and controller tests
+- Controller tests
+- Service tests
 - Integration tests
-- Security and authorization tests
+- Security tests
+- Role authorization tests
 - Account concurrency tests
 - Refresh token tests
+- Refresh token rotation tests
+- Refresh token concurrency tests
 - GitHub Actions CI
 - PostgreSQL service inside CI
 
 ---
 
-## 🛠 Tech Stack
+# 🛠 Tech Stack
 
-| Technology | Usage |
-|---|---|
-| Java 21 | Application language |
-| Spring Boot 4.1 | Application framework |
-| Spring Web MVC | REST API |
-| Spring Data JPA | Persistence |
-| Spring Security | Authentication & authorization |
-| JJWT | JWT access tokens |
-| PostgreSQL 17 | Database |
-| Flyway | Database migrations |
-| Maven | Build & dependency management |
-| Docker Compose | Local PostgreSQL |
-| JUnit / Mockito / MockMvc | Testing |
-| GitHub Actions | CI |
-| Springdoc OpenAPI | Swagger documentation |
+- Java 21
+- Spring Boot 4.1.0
+- Spring Web MVC
+- Spring Data JPA
+- Spring Security
+- JWT / JJWT
+- PostgreSQL 17
+- Flyway
+- Maven
+- Docker
+- Docker Compose
+- JUnit
+- Mockito
+- MockMvc
+- Git
+- GitHub Actions
+- Swagger / OpenAPI
 
 ---
 
-## 🔐 Authentication Flow
+# 📁 Project Structure
 
-### Register
+```text
+src/main/java/com/batuhan/bankingapi
+│
+├── config
+│   ├── JwtAuthFilter
+│   └── SecurityConfig
+│
+├── controller
+│   ├── AuthController
+│   ├── UserController
+│   ├── AccountController
+│   └── TransactionController
+│
+├── dto
+│   ├── AuthResponse
+│   ├── CreateUserRequest
+│   ├── LoginRequest
+│   ├── RefreshTokenRequest
+│   ├── AccountResponse
+│   ├── DepositRequest
+│   ├── WithdrawRequest
+│   ├── TransferRequest
+│   ├── UserResponse
+│   └── ...
+│
+├── entity
+│   ├── User
+│   ├── Account
+│   ├── Transaction
+│   ├── RefreshToken
+│   ├── Role
+│   └── TransactionType
+│
+├── exception
+│   ├── GlobalExceptionHandler
+│   ├── InvalidCredentialsException
+│   ├── InvalidRefreshTokenException
+│   └── ...
+│
+├── mapper
+│
+├── repository
+│   ├── UserRepository
+│   ├── AccountRepository
+│   ├── TransactionRepository
+│   └── RefreshTokenRepository
+│
+└── service
+    ├── AuthService
+    ├── JwtService
+    ├── RefreshTokenService
+    ├── UserService
+    ├── AccountService
+    └── TransactionService
+```
+
+---
+
+# 🔐 Authentication Flow
+
+## Register
 
 ```http
 POST /api/auth/register
@@ -107,14 +199,27 @@ Example request:
 }
 ```
 
-On successful registration:
+During registration:
 
-1. Customer is created.
-2. A unique **8-digit customer number** is generated.
-3. Password is stored using BCrypt.
-4. Customer receives the default `USER` role.
-5. A default bank account is created automatically with `0.00` balance.
-6. Access and refresh tokens are returned.
+```text
+Register Request
+      ↓
+Validate Customer Data
+      ↓
+Generate 8-Digit Customer Number
+      ↓
+Hash Password with BCrypt
+      ↓
+Create USER
+      ↓
+Create Default Bank Account
+      ↓
+Initial Balance = 0.00
+      ↓
+Generate Access Token
+      ↓
+Generate Refresh Token
+```
 
 Example response:
 
@@ -131,15 +236,35 @@ Example response:
 }
 ```
 
-### Login
+New customers automatically receive:
 
-Customers log in with either their **customer number** or **National ID**.
+```text
+Role: USER
+Default Account: ACC-XXXXXXXX
+Balance: 0.00
+```
+
+Customers cannot assign themselves the `ADMIN` role during registration.
+
+---
+
+## Login
 
 ```http
 POST /api/auth/login
 ```
 
-Using customer number:
+Customers can authenticate using either:
+
+```text
+8-digit Customer Number
+
+or
+
+11-digit Turkish National ID
+```
+
+### Login with Customer Number
 
 ```json
 {
@@ -148,7 +273,7 @@ Using customer number:
 }
 ```
 
-Using National ID:
+### Login with National ID
 
 ```json
 {
@@ -157,13 +282,31 @@ Using National ID:
 }
 ```
 
-Email is kept as a unique contact field and is **not used as the primary login identifier**.
+Authentication flow:
 
-### Refresh Token
+```text
+Customer Number / National ID
+            ↓
+       Find Customer
+            ↓
+      Verify Password
+            ↓
+       Generate JWT
+            ↓
+   Generate Refresh Token
+```
+
+Email remains a unique customer contact field but is **not used as the primary login identifier**.
+
+---
+
+# 🔄 Refresh Token Flow
 
 ```http
 POST /api/auth/refresh
 ```
+
+Request:
 
 ```json
 {
@@ -171,59 +314,486 @@ POST /api/auth/refresh
 }
 ```
 
-Refresh tokens use rotation and are stored as SHA-256 hashes in the database.
+Successful refresh:
+
+```text
+Refresh Token
+      ↓
+Validate
+      ↓
+Delete Old Token
+      ↓
+Generate New Access Token
+      ↓
+Generate New Refresh Token
+```
+
+Refresh tokens use **rotation**.
+
+After a refresh token is successfully used, the previous token becomes invalid.
+
+Raw refresh tokens are not stored directly in PostgreSQL.
+
+```text
+Raw Refresh Token
+      ↓
+SHA-256
+      ↓
+token_hash
+      ↓
+PostgreSQL
+```
+
+This reduces the impact of refresh-token data exposure.
 
 ---
 
-## 💳 Main API Endpoints
+# 🛡 Role-Based Authorization
 
-Authentication is required unless stated otherwise.
-
-### Authentication
+The application supports:
 
 ```text
-POST   /api/auth/register      Public
-POST   /api/auth/login         Public
-POST   /api/auth/refresh       Public
+USER
+ADMIN
 ```
 
-### Accounts
+Spring Security authorization:
 
 ```text
-POST   /api/accounts
-GET    /api/accounts/me
-GET    /api/accounts/{id}
-POST   /api/accounts/{id}/deposit
-POST   /api/accounts/{id}/withdraw
-POST   /api/accounts/transfer
+/api/auth/**       → PUBLIC
+
+/swagger-ui/**     → PUBLIC
+
+/v3/api-docs/**    → PUBLIC
+
+/api/users/**      → ROLE_ADMIN
+
+Other API
+endpoints          → AUTHENTICATED
 ```
 
-`GET /api/accounts/me` returns only the accounts belonging to the authenticated customer.
-
-### Transactions
-
-```text
-GET    /api/transactions/account/{accountId}
-```
-
-Customers can access transaction history only for accounts they own.
-
-### User Management
-
-```text
-GET     /api/users
-GET     /api/users/{id}
-POST    /api/users
-PUT     /api/users/{id}
-PATCH   /api/users/{id}
-DELETE  /api/users/{id}
-```
-
-User management endpoints require `ROLE_ADMIN`.
+Normal customers cannot access administrator user-management endpoints.
 
 ---
 
-## ⚙️ Environment Variables
+# 👤 User Endpoints
+
+User management endpoints require:
+
+```text
+ROLE_ADMIN
+```
+
+### Get All Users
+
+```http
+GET /api/users
+```
+
+### Get User
+
+```http
+GET /api/users/{id}
+```
+
+### Create User
+
+```http
+POST /api/users
+```
+
+### Update User
+
+```http
+PUT /api/users/{id}
+```
+
+or
+
+```http
+PATCH /api/users/{id}
+```
+
+### Delete User
+
+```http
+DELETE /api/users/{id}
+```
+
+---
+
+# 💳 Account Endpoints
+
+Account endpoints require authentication.
+
+## Automatic Default Account
+
+A default account is automatically created when a new customer registers.
+
+```text
+Customer Registration
+        ↓
+User Created
+        ↓
+Default Account Created
+        ↓
+ACC-XXXXXXXX
+        ↓
+Balance = 0.00
+```
+
+Example:
+
+```text
+Customer Number: 42267099
+Account Number:  ACC-5EA32773
+Balance:         0.00
+```
+
+---
+
+## Create Additional Account
+
+```http
+POST /api/accounts
+```
+
+The account is automatically associated with the authenticated customer.
+
+---
+
+## My Accounts
+
+```http
+GET /api/accounts/me
+```
+
+Example response:
+
+```json
+[
+  {
+    "id": 1,
+    "accountNumber": "ACC-5EA32773",
+    "balance": 0.00,
+    "userId": 2
+  }
+]
+```
+
+The backend determines the authenticated customer from the JWT.
+
+The client does not need to send a user ID.
+
+---
+
+## Get Account
+
+```http
+GET /api/accounts/{id}
+```
+
+Customers can access only accounts they own.
+
+---
+
+# 💰 Deposit
+
+```http
+POST /api/accounts/{id}/deposit
+```
+
+Flow:
+
+```text
+Authenticated Customer
+        ↓
+Account Ownership
+        ↓
+Pessimistic Lock
+        ↓
+Update Balance
+        ↓
+Create DEPOSIT Transaction
+```
+
+---
+
+# 💸 Withdraw
+
+```http
+POST /api/accounts/{id}/withdraw
+```
+
+The API verifies:
+
+```text
+Authenticated Customer
+        ↓
+Account Ownership
+        ↓
+Pessimistic Lock
+        ↓
+Balance Check
+        ↓
+Withdraw
+        ↓
+Create WITHDRAW Transaction
+```
+
+A withdrawal cannot reduce the account balance below zero.
+
+---
+
+# 🔁 Transfer
+
+```http
+POST /api/accounts/transfer
+```
+
+Money can be transferred between accounts.
+
+Transfer flow:
+
+```text
+Transfer Request
+      ↓
+Determine Lock Order
+      ↓
+Lock Both Accounts
+      ↓
+Validate Sender Ownership
+      ↓
+Validate Balance
+      ↓
+Update Sender Balance
+      ↓
+Update Receiver Balance
+      ↓
+Create TRANSFER Transaction
+```
+
+Accounts are locked in deterministic ID order to reduce deadlock risk.
+
+---
+
+# 📜 Transaction History
+
+```http
+GET /api/transactions/account/{accountId}
+```
+
+Authenticated customers can access transaction history only for accounts they own.
+
+Supported transaction types:
+
+```text
+DEPOSIT
+WITHDRAW
+TRANSFER
+```
+
+Transaction history is ordered by creation time.
+
+---
+
+# ⚡ Concurrency Protection
+
+Financial balances must remain correct even when multiple requests arrive at the same time.
+
+Critical balance operations use:
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+```
+
+Example scenario:
+
+```text
+Starting Balance: 1000
+
+Request A → Withdraw 800
+Request B → Withdraw 800
+```
+
+Expected result:
+
+```text
+One withdrawal succeeds ✅
+
+One withdrawal fails ✅
+
+Final balance = 200 ✅
+```
+
+The same principle is used to protect refresh token rotation from concurrent reuse.
+
+---
+
+# 🗄 Database Migrations
+
+Database schema changes are managed using **Flyway**.
+
+Migration files are located in:
+
+```text
+src/main/resources/db/migration
+```
+
+Current migrations:
+
+```text
+V1__initial_schema.sql
+V2__add_transaction_created_at_index.sql
+V3__add_role_to_users.sql
+V4__create_refresh_tokens_table.sql
+V5__hash_refresh_tokens.sql
+V6__add_customer_identity.sql
+```
+
+### V1
+
+Creates the initial banking tables:
+
+```text
+users
+accounts
+transactions
+```
+
+### V2
+
+Adds an index for:
+
+```text
+transactions.created_at
+```
+
+### V3
+
+Adds role support to users:
+
+```text
+USER
+ADMIN
+```
+
+### V4
+
+Creates:
+
+```text
+refresh_tokens
+```
+
+### V5
+
+Migrates refresh token storage:
+
+```text
+Raw Token
+    ↓
+SHA-256
+    ↓
+token_hash
+```
+
+### V6
+
+Adds customer identity fields:
+
+```text
+customer_number
+national_id
+phone
+```
+
+and unique indexes for:
+
+```text
+customer_number
+national_id
+phone
+```
+
+---
+
+# 🧪 Testing
+
+The project contains automated tests covering:
+
+- User service
+- User controller
+- Authentication
+- Customer number / National ID login
+- JWT security
+- Role authorization
+- Account creation
+- Automatic default account creation
+- Deposits
+- Withdrawals
+- Transfers
+- Transaction history
+- Account ownership
+- Database migrations
+- Concurrent withdrawals
+- Refresh token validation
+- Refresh token rotation
+- Refresh token reuse rejection
+- Concurrent refresh requests
+- Refresh token SHA-256 storage
+
+Run all tests on Windows:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Expected result:
+
+```text
+BUILD SUCCESS
+```
+
+The README intentionally does not hardcode the number of tests because the test suite continues to grow.
+
+---
+
+# 🔄 CI/CD
+
+The project uses **GitHub Actions**.
+
+Workflow:
+
+```text
+.github/workflows/ci.yml
+```
+
+Pipeline:
+
+```text
+GitHub Actions
+      ↓
+Java 21
+      ↓
+PostgreSQL 17
+      ↓
+Flyway Migrations
+      ↓
+Spring Boot Context
+      ↓
+Automated Tests
+      ↓
+BUILD SUCCESS ✅
+```
+
+The CI environment uses a separate test database.
+
+Sensitive values such as database passwords and JWT secrets are stored using GitHub Actions secrets.
+
+---
+
+# ⚙️ Environment Variables
 
 The application expects:
 
@@ -232,26 +802,20 @@ DB_PASSWORD
 JWT_SECRET
 ```
 
-Example PowerShell session:
+Example PowerShell configuration:
 
 ```powershell
 $env:DB_PASSWORD="your_database_password"
 $env:JWT_SECRET="your_base64_jwt_secret"
 ```
 
-Sensitive values should never be committed to the repository.
+Sensitive values must not be committed to the repository.
 
 ---
 
-## 🐘 Run Locally
+# 🐘 PostgreSQL
 
-### 1. Start PostgreSQL
-
-```bash
-docker compose up -d
-```
-
-Default local database:
+Default local configuration:
 
 ```text
 Database: banking_db
@@ -259,7 +823,17 @@ User: banking_user
 Port: 5432
 ```
 
-### 2. Run the application
+The database can be inspected using tools such as **DBeaver**.
+
+Start PostgreSQL with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+---
+
+# ▶️ Run Application
 
 Windows:
 
@@ -273,19 +847,19 @@ macOS / Linux:
 ./mvnw spring-boot:run
 ```
 
-The API runs by default on:
+Default API address:
 
 ```text
 http://localhost:8080
 ```
 
-Flyway migrations are applied automatically at startup.
+Flyway migrations run automatically when the application starts.
 
 ---
 
-## 📖 Swagger
+# 📖 Swagger
 
-Swagger UI:
+When the application is running:
 
 ```text
 http://localhost:8080/swagger-ui/index.html
@@ -299,74 +873,101 @@ http://localhost:8080/v3/api-docs
 
 ---
 
-## 🧪 Run Tests
+# 🗺 Roadmap
 
-Windows:
+Completed:
 
-```powershell
-.\mvnw.cmd test
-```
+- [x] User CRUD
+- [x] Request validation
+- [x] Global exception handling
+- [x] PostgreSQL
+- [x] Account management
+- [x] Deposit
+- [x] Withdraw
+- [x] Transfer
+- [x] Transaction history
+- [x] Account ownership
+- [x] JWT authentication
+- [x] BCrypt password hashing
+- [x] Spring Security
+- [x] Role-Based Authorization
+- [x] Flyway migrations
+- [x] Database indexing
+- [x] Account concurrency protection
+- [x] Refresh Tokens
+- [x] Refresh Token Rotation
+- [x] Refresh Token Concurrency Protection
+- [x] Hashed Refresh Token Storage
+- [x] Customer Number Generation
+- [x] National ID Authentication
+- [x] Customer Number Authentication
+- [x] Automatic Default Account Creation
+- [x] Unit Tests
+- [x] Integration Tests
+- [x] GitHub Actions CI
 
-macOS / Linux:
+Current focus:
 
-```bash
-./mvnw test
-```
+- [ ] Connect Flutter dashboard to `/api/accounts/me`
+- [ ] Replace mock balance with real database balance
+- [ ] Display real account number in Flutter
+- [ ] Connect real transaction history
 
-The repository includes automated unit, integration, security and concurrency tests. GitHub Actions runs the test suite automatically on pushes and pull requests to `main`.
+Possible future improvements:
+
+- [ ] Logout / Refresh Token Revocation
+- [ ] Account type support
+- [ ] Currency support
+- [ ] IBAN support
+- [ ] Account status management
+- [ ] Transaction limits
+- [ ] Audit logging
+- [ ] Pagination
+- [ ] API versioning
+- [ ] Rate limiting
+- [ ] Production configuration
 
 ---
 
-## 🔒 Concurrency & Data Integrity
-
-Financial operations use pessimistic database locking where required.
-
-This protects account balances when multiple requests attempt to update the same account concurrently.
-
-Transfers lock accounts in deterministic order to reduce deadlock risk while preserving balance consistency.
-
----
-
-## 🗄 Database Migrations
-
-Database schema changes are managed with Flyway.
-
-Migration files are located at:
+# 📌 Current Status
 
 ```text
-src/main/resources/db/migration
+Customer Registration                  ✅
+8-Digit Customer Number Generation     ✅
+National ID / Customer Number Login    ✅
+Password Hashing                       ✅
+JWT Authentication                     ✅
+Refresh Token Rotation                 ✅
+Hashed Refresh Token Storage           ✅
+Role-Based Authorization               ✅
+User Management                        ✅
+Automatic Default Account              ✅
+Accounts                               ✅
+Deposits                               ✅
+Withdrawals                            ✅
+Transfers                              ✅
+Transaction History                    ✅
+Account Ownership                      ✅
+Concurrency Protection                 ✅
+Flyway Migrations                      ✅
+Automated Tests                        ✅
+GitHub Actions CI                      ✅
 ```
 
-The schema includes users, customer identity fields, accounts, transactions, roles and secure refresh-token storage.
+The backend core is now ready to provide real banking data to the Flutter application.
 
----
-
-## 📌 Current Status
+Next development focus:
 
 ```text
-Customer Registration                 ✅
-Customer Number Generation            ✅
-National ID / Customer Number Login   ✅
-JWT Authentication                    ✅
-Refresh Token Rotation                ✅
-Role-Based Authorization              ✅
-Automatic Default Account             ✅
-Account Ownership                     ✅
-Deposit / Withdraw                    ✅
-Transfers                             ✅
-Transaction History                   ✅
-Concurrency Protection                ✅
-Flyway Migrations                     ✅
-Automated Tests                       ✅
-GitHub Actions CI                     ✅
+PostgreSQL
+    ↓
+Real Account
+    ↓
+GET /api/accounts/me
+    ↓
+Flutter
+    ↓
+Real Dashboard
 ```
 
-### Next Focus
-
-- Connect the Flutter application to real account data
-- Replace dashboard mock balances with `/api/accounts/me`
-- Display real transaction history
-- Improve account model with banking-specific account metadata
-- Continue production hardening as the project grows
-
-> This project is built for learning and portfolio purposes and is not intended for production banking use.
+> This project is developed for learning and portfolio purposes and is not intended for real-world production banking use.
