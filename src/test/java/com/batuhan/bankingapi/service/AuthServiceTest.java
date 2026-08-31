@@ -36,6 +36,8 @@ public class AuthServiceTest {
 
     @Mock
     private RefreshTokenService refreshTokenService;
+    @Mock
+    private AccountService accountService;
 
     private AuthService authService;
 
