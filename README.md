@@ -1,8 +1,13 @@
 # Banking API 🏦
 
-**Java 21** • **Spring Boot 4.1.0** • **PostgreSQL 17** • **JWT** • **Flyway** • **Docker**
-
-![CI](../../actions/workflows/ci.yml/badge.svg)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-brightgreen)
+![Flyway](https://img.shields.io/badge/Flyway-Migrations-red)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue)
+![Tests](https://img.shields.io/badge/tests-passing-success)
+![CI](https://github.com/batuhantptnci/banking-api/actions/workflows/ci.yml/badge.svg)
 
 A portfolio-grade banking backend application built with **Java 21, Spring Boot, PostgreSQL, Spring Security, JWT, Flyway and Docker**.
 
