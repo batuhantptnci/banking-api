@@ -34,44 +34,57 @@ class RefreshTokenHashIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void shouldStoreRefreshTokenAsHash() throws Exception {
+    void shouldStoreRefreshTokenAsHash()
+            throws Exception {
 
         String email =
-                "hash-" + UUID.randomUUID() + "@test.com";
+                "hash-" +
+                        UUID.randomUUID() +
+                        "@test.com";
 
-        String registerBody = """
-                {
-                  "fullName": "Hash Test",
-                  "email": "%s",
-                  "password": "12345678"
-                }
-                """.formatted(email);
+        String registerBody =
+                IntegrationTestData.registerBody(
+                        "Hash Test",
+                        email
+                );
 
-        MvcResult result = mockMvc.perform(
-                        post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(registerBody)
-                )
-                .andExpect(status().is2xxSuccessful())
-                .andReturn();
+        MvcResult result =
+                mockMvc.perform(
+                                post("/api/auth/register")
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                registerBody
+                                        )
+                        )
+                        .andExpect(
+                                status().is2xxSuccessful()
+                        )
+                        .andReturn();
 
-        String rawRefreshToken = jsonMapper
-                .readTree(
-                        result.getResponse().getContentAsString()
-                )
-                .get("refreshToken")
-                .asText();
+        String rawRefreshToken =
+                jsonMapper
+                        .readTree(
+                                result
+                                        .getResponse()
+                                        .getContentAsString()
+                        )
+                        .get("refreshToken")
+                        .asText();
 
-        String storedTokenHash = jdbcTemplate.queryForObject(
-                """
-                SELECT rt.token_hash
-                FROM refresh_tokens rt
-                JOIN users u ON u.id = rt.user_id
-                WHERE u.email = ?
-                """,
-                String.class,
-                email
-        );
+        String storedTokenHash =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT rt.token_hash
+                        FROM refresh_tokens rt
+                        JOIN users u
+                          ON u.id = rt.user_id
+                        WHERE u.email = ?
+                        """,
+                        String.class,
+                        email
+                );
 
         assertNotEquals(
                 rawRefreshToken,
@@ -89,15 +102,24 @@ class RefreshTokenHashIntegrationTest {
         );
     }
 
-    private String sha256(String value) throws Exception {
+    private String sha256(
+            String value
+    ) throws Exception {
 
         MessageDigest digest =
-                MessageDigest.getInstance("SHA-256");
+                MessageDigest.getInstance(
+                        "SHA-256"
+                );
 
-        byte[] hash = digest.digest(
-                value.getBytes(StandardCharsets.UTF_8)
-        );
+        byte[] hash =
+                digest.digest(
+                        value.getBytes(
+                                StandardCharsets.UTF_8
+                        )
+                );
 
-        return HexFormat.of().formatHex(hash);
+        return HexFormat
+                .of()
+                .formatHex(hash);
     }
 }

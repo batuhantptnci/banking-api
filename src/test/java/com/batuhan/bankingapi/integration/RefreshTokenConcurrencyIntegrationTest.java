@@ -2,7 +2,6 @@ package com.batuhan.bankingapi.integration;
 
 import com.batuhan.bankingapi.dto.RefreshTokenRequest;
 import com.batuhan.bankingapi.entity.RefreshToken;
-import com.batuhan.bankingapi.entity.Role;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.InvalidRefreshTokenException;
 import com.batuhan.bankingapi.repository.UserRepository;
@@ -34,23 +33,30 @@ class RefreshTokenConcurrencyIntegrationTest {
     private RefreshTokenService refreshTokenService;
 
     @Test
-    void shouldAllowOnlyOneConcurrentRefresh() throws Exception {
+    void shouldAllowOnlyOneConcurrentRefresh()
+            throws Exception {
 
-        User user = new User();
-        user.setFullName("Refresh Concurrency Test");
-        user.setEmail(
-                "refresh-concurrency-" + UUID.randomUUID() + "@test.com"
-        );
-        user.setPassword("unused-password");
-        user.setRole(Role.USER);
+        User user =
+                IntegrationTestData.user(
+                        "Refresh Concurrency Test",
+                        "refresh-concurrency-" +
+                                UUID.randomUUID() +
+                                "@test.com"
+                );
 
-        User savedUser = userRepository.save(user);
+        User savedUser =
+                userRepository.saveAndFlush(user);
 
         RefreshToken refreshToken =
-                refreshTokenService.createRefreshToken(savedUser);
+                refreshTokenService
+                        .createRefreshToken(savedUser);
 
-        RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken(refreshToken.getToken());
+        RefreshTokenRequest request =
+                new RefreshTokenRequest();
+
+        request.setRefreshToken(
+                refreshToken.getToken()
+        );
 
         ExecutorService executor =
                 Executors.newFixedThreadPool(2);
@@ -60,17 +66,24 @@ class RefreshTokenConcurrencyIntegrationTest {
 
         try {
 
-            var task = (java.util.concurrent.Callable<Boolean>) () -> {
+            var task =
+                    (java.util.concurrent.Callable<Boolean>) () -> {
 
-                startLatch.await();
+                        startLatch.await();
 
-                try {
-                    authService.refresh(request);
-                    return true;
-                } catch (InvalidRefreshTokenException ex) {
-                    return false;
-                }
-            };
+                        try {
+
+                            authService.refresh(request);
+
+                            return true;
+
+                        } catch (
+                                InvalidRefreshTokenException exception
+                        ) {
+
+                            return false;
+                        }
+                    };
 
             Future<Boolean> first =
                     executor.submit(task);
@@ -81,10 +94,16 @@ class RefreshTokenConcurrencyIntegrationTest {
             startLatch.countDown();
 
             boolean firstResult =
-                    first.get(10, TimeUnit.SECONDS);
+                    first.get(
+                            10,
+                            TimeUnit.SECONDS
+                    );
 
             boolean secondResult =
-                    second.get(10, TimeUnit.SECONDS);
+                    second.get(
+                            10,
+                            TimeUnit.SECONDS
+                    );
 
             long successCount = 0;
 
@@ -96,9 +115,13 @@ class RefreshTokenConcurrencyIntegrationTest {
                 successCount++;
             }
 
-            assertEquals(1, successCount);
+            assertEquals(
+                    1,
+                    successCount
+            );
 
         } finally {
+
             executor.shutdownNow();
         }
     }

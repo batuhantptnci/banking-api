@@ -18,10 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class AuthServiceTest {
 
@@ -44,6 +41,7 @@ public class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+
         MockitoAnnotations.openMocks(this);
 
         authService = new AuthService(
@@ -59,186 +57,448 @@ public class AuthServiceTest {
     void shouldLoginSuccessfully() {
 
         LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
+
+        request.setIdentifier("12345678");
         request.setPassword("12345678");
 
         User user = new User();
+
         user.setId(1L);
         user.setFullName("Test User");
         user.setEmail("test@test.com");
+        user.setCustomerNumber("12345678");
+        user.setNationalId("11111111111");
+        user.setPhone("5551112233");
         user.setPassword("$2a$10$fakeHash");
         user.setRole(Role.USER);
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setToken("fake-refresh-token");
+        RefreshToken refreshToken =
+                new RefreshToken();
 
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
+        refreshToken.setToken(
+                "fake-refresh-token"
+        );
 
-        when(passwordEncoder.matches(
-                "12345678",
-                "$2a$10$fakeHash"
-        )).thenReturn(true);
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "12345678",
+                                "12345678"
+                        )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
-        when(jwtService.generateToken(
-                "test@test.com",
-                Role.USER
-        )).thenReturn("fake-jwt-token");
+        when(
+                passwordEncoder.matches(
+                        "12345678",
+                        "$2a$10$fakeHash"
+                )
+        ).thenReturn(true);
 
-        when(refreshTokenService.createRefreshToken(user))
-                .thenReturn(refreshToken);
+        when(
+                jwtService.generateToken(
+                        "test@test.com",
+                        Role.USER
+                )
+        ).thenReturn(
+                "fake-jwt-token"
+        );
 
-        var response = authService.login(request);
+        when(
+                refreshTokenService
+                        .createRefreshToken(user)
+        ).thenReturn(
+                refreshToken
+        );
+
+        var response =
+                authService.login(request);
 
         assertNotNull(response);
         assertNotNull(response.getToken());
-        assertNotNull(response.getRefreshToken());
+        assertNotNull(
+                response.getRefreshToken()
+        );
 
-        verify(jwtService, times(1))
-                .generateToken(
+        verify(
+                userRepository,
+                times(1)
+        ).findByCustomerNumberOrNationalId(
+                "12345678",
+                "12345678"
+        );
+
+        verify(
+                jwtService,
+                times(1)
+        ).generateToken(
+                "test@test.com",
+                Role.USER
+        );
+
+        verify(
+                refreshTokenService,
+                times(1)
+        ).createRefreshToken(user);
+    }
+
+    @Test
+    void shouldLoginSuccessfullyWithNationalId() {
+
+        LoginRequest request =
+                new LoginRequest();
+
+        request.setIdentifier(
+                "11111111111"
+        );
+
+        request.setPassword(
+                "12345678"
+        );
+
+        User user = new User();
+
+        user.setId(1L);
+        user.setFullName("Test User");
+        user.setEmail("test@test.com");
+        user.setCustomerNumber("12345678");
+        user.setNationalId("11111111111");
+        user.setPhone("5551112233");
+        user.setPassword("$2a$10$fakeHash");
+        user.setRole(Role.USER);
+
+        RefreshToken refreshToken =
+                new RefreshToken();
+
+        refreshToken.setToken(
+                "fake-refresh-token"
+        );
+
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "11111111111",
+                                "11111111111"
+                        )
+        ).thenReturn(
+                Optional.of(user)
+        );
+
+        when(
+                passwordEncoder.matches(
+                        "12345678",
+                        "$2a$10$fakeHash"
+                )
+        ).thenReturn(true);
+
+        when(
+                jwtService.generateToken(
                         "test@test.com",
                         Role.USER
-                );
+                )
+        ).thenReturn(
+                "fake-jwt-token"
+        );
 
-        verify(refreshTokenService, times(1))
-                .createRefreshToken(user);
+        when(
+                refreshTokenService
+                        .createRefreshToken(user)
+        ).thenReturn(
+                refreshToken
+        );
+
+        var response =
+                authService.login(request);
+
+        assertNotNull(response);
+        assertNotNull(response.getToken());
+
+        verify(
+                userRepository
+        ).findByCustomerNumberOrNationalId(
+                "11111111111",
+                "11111111111"
+        );
     }
 
     @Test
     void shouldThrowExceptionWhenPasswordIsWrong() {
 
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("wrongPassword");
+        LoginRequest request =
+                new LoginRequest();
+
+        request.setIdentifier(
+                "12345678"
+        );
+
+        request.setPassword(
+                "wrongPassword"
+        );
 
         User user = new User();
-        user.setEmail("test@test.com");
-        user.setPassword("$2a$10$fakeHash");
+
+        user.setEmail(
+                "test@test.com"
+        );
+
+        user.setCustomerNumber(
+                "12345678"
+        );
+
+        user.setPassword(
+                "$2a$10$fakeHash"
+        );
+
         user.setRole(Role.USER);
 
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "12345678",
+                                "12345678"
+                        )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
-        when(passwordEncoder.matches(
-                "wrongPassword",
-                "$2a$10$fakeHash"
-        )).thenReturn(false);
+        when(
+                passwordEncoder.matches(
+                        "wrongPassword",
+                        "$2a$10$fakeHash"
+                )
+        ).thenReturn(false);
 
         assertThrows(
                 InvalidCredentialsException.class,
                 () -> authService.login(request)
         );
 
-        verify(jwtService, never())
-                .generateToken(
-                        anyString(),
-                        any(Role.class)
-                );
+        verify(
+                jwtService,
+                never()
+        ).generateToken(
+                anyString(),
+                any(Role.class)
+        );
 
-        verify(refreshTokenService, never())
-                .createRefreshToken(any(User.class));
+        verify(
+                refreshTokenService,
+                never()
+        ).createRefreshToken(
+                any(User.class)
+        );
     }
 
     @Test
-    void shouldThrowExceptionWhenEmailDoesNotExist() {
+    void shouldThrowExceptionWhenIdentifierDoesNotExist() {
 
-        LoginRequest request = new LoginRequest();
-        request.setEmail("notfound@test.com");
-        request.setPassword("12345678");
+        LoginRequest request =
+                new LoginRequest();
 
-        when(userRepository.findByEmail("notfound@test.com"))
-                .thenReturn(Optional.empty());
+        request.setIdentifier(
+                "12345678"
+        );
+
+        request.setPassword(
+                "12345678"
+        );
+
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "12345678",
+                                "12345678"
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 InvalidCredentialsException.class,
                 () -> authService.login(request)
         );
 
-        verify(jwtService, never())
-                .generateToken(
-                        anyString(),
-                        any(Role.class)
-                );
+        verify(
+                jwtService,
+                never()
+        ).generateToken(
+                anyString(),
+                any(Role.class)
+        );
 
-        verify(refreshTokenService, never())
-                .createRefreshToken(any(User.class));
+        verify(
+                refreshTokenService,
+                never()
+        ).createRefreshToken(
+                any(User.class)
+        );
     }
 
     @Test
     void shouldNotGenerateTokenWhenPasswordIsWrong() {
 
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("wrongPassword");
+        LoginRequest request =
+                new LoginRequest();
+
+        request.setIdentifier(
+                "12345678"
+        );
+
+        request.setPassword(
+                "wrongPassword"
+        );
 
         User user = new User();
-        user.setEmail("test@test.com");
-        user.setPassword("$2a$10$fakeHash");
+
+        user.setEmail(
+                "test@test.com"
+        );
+
+        user.setCustomerNumber(
+                "12345678"
+        );
+
+        user.setPassword(
+                "$2a$10$fakeHash"
+        );
+
         user.setRole(Role.USER);
 
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "12345678",
+                                "12345678"
+                        )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
-        when(passwordEncoder.matches(
-                "wrongPassword",
-                "$2a$10$fakeHash"
-        )).thenReturn(false);
+        when(
+                passwordEncoder.matches(
+                        "wrongPassword",
+                        "$2a$10$fakeHash"
+                )
+        ).thenReturn(false);
 
         assertThrows(
                 InvalidCredentialsException.class,
                 () -> authService.login(request)
         );
 
-        verify(jwtService, never())
-                .generateToken(
-                        anyString(),
-                        any(Role.class)
-                );
+        verify(
+                jwtService,
+                never()
+        ).generateToken(
+                anyString(),
+                any(Role.class)
+        );
 
-        verify(refreshTokenService, never())
-                .createRefreshToken(any(User.class));
+        verify(
+                refreshTokenService,
+                never()
+        ).createRefreshToken(
+                any(User.class)
+        );
     }
 
     @Test
     void shouldGenerateTokenOnceWhenLoginIsSuccessful() {
 
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("12345678");
+        LoginRequest request =
+                new LoginRequest();
+
+        request.setIdentifier(
+                "12345678"
+        );
+
+        request.setPassword(
+                "12345678"
+        );
 
         User user = new User();
-        user.setEmail("test@test.com");
-        user.setPassword("$2a$10$fakeHash");
+
+        user.setId(1L);
+        user.setFullName(
+                "Test User"
+        );
+
+        user.setEmail(
+                "test@test.com"
+        );
+
+        user.setCustomerNumber(
+                "12345678"
+        );
+
+        user.setNationalId(
+                "11111111111"
+        );
+
+        user.setPhone(
+                "5551112233"
+        );
+
+        user.setPassword(
+                "$2a$10$fakeHash"
+        );
+
         user.setRole(Role.USER);
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setToken("fake-refresh-token");
+        RefreshToken refreshToken =
+                new RefreshToken();
 
-        when(userRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(user));
+        refreshToken.setToken(
+                "fake-refresh-token"
+        );
 
-        when(passwordEncoder.matches(
-                "12345678",
-                "$2a$10$fakeHash"
-        )).thenReturn(true);
+        when(
+                userRepository
+                        .findByCustomerNumberOrNationalId(
+                                "12345678",
+                                "12345678"
+                        )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
-        when(jwtService.generateToken(
-                "test@test.com",
-                Role.USER
-        )).thenReturn("fake-jwt-token");
+        when(
+                passwordEncoder.matches(
+                        "12345678",
+                        "$2a$10$fakeHash"
+                )
+        ).thenReturn(true);
 
-        when(refreshTokenService.createRefreshToken(user))
-                .thenReturn(refreshToken);
+        when(
+                jwtService.generateToken(
+                        "test@test.com",
+                        Role.USER
+                )
+        ).thenReturn(
+                "fake-jwt-token"
+        );
+
+        when(
+                refreshTokenService
+                        .createRefreshToken(user)
+        ).thenReturn(
+                refreshToken
+        );
 
         authService.login(request);
 
-        verify(jwtService, times(1))
-                .generateToken(
-                        "test@test.com",
-                        Role.USER
-                );
+        verify(
+                jwtService,
+                times(1)
+        ).generateToken(
+                "test@test.com",
+                Role.USER
+        );
 
-        verify(refreshTokenService, times(1))
-                .createRefreshToken(user);
+        verify(
+                refreshTokenService,
+                times(1)
+        ).createRefreshToken(user);
     }
 }

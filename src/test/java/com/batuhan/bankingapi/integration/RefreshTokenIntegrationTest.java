@@ -27,60 +27,85 @@ class RefreshTokenIntegrationTest {
     private JsonMapper jsonMapper;
 
     @Test
-    void shouldRotateRefreshTokenAndRejectOldToken() throws Exception {
+    void shouldRotateRefreshTokenAndRejectOldToken()
+            throws Exception {
 
         String email =
-                "refresh-" + UUID.randomUUID() + "@test.com";
+                "refresh-" +
+                        UUID.randomUUID() +
+                        "@test.com";
 
-        String registerBody = """
-                {
-                  "fullName": "Refresh Test",
-                  "email": "%s",
-                  "password": "12345678"
-                }
-                """.formatted(email);
+        String registerBody =
+                IntegrationTestData.registerBody(
+                        "Refresh Test",
+                        email
+                );
 
-        MvcResult registerResult = mockMvc.perform(
-                        post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(registerBody)
-                )
-                .andExpect(status().is2xxSuccessful())
-                .andReturn();
+        MvcResult registerResult =
+                mockMvc.perform(
+                                post("/api/auth/register")
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                registerBody
+                                        )
+                        )
+                        .andExpect(
+                                status().is2xxSuccessful()
+                        )
+                        .andReturn();
 
-        String oldRefreshToken = jsonMapper
-                .readTree(
-                        registerResult
-                                .getResponse()
-                                .getContentAsString()
-                )
-                .get("refreshToken")
-                .asText();
+        String oldRefreshToken =
+                jsonMapper
+                        .readTree(
+                                registerResult
+                                        .getResponse()
+                                        .getContentAsString()
+                        )
+                        .get("refreshToken")
+                        .asText();
 
         String refreshBody = """
                 {
                   "refreshToken": "%s"
                 }
-                """.formatted(oldRefreshToken);
+                """.formatted(
+                oldRefreshToken
+        );
 
-        MvcResult refreshResult = mockMvc.perform(
-                        post("/api/auth/refresh")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(refreshBody)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andReturn();
+        MvcResult refreshResult =
+                mockMvc.perform(
+                                post("/api/auth/refresh")
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                refreshBody
+                                        )
+                        )
+                        .andExpect(
+                                status().isOk()
+                        )
+                        .andExpect(
+                                jsonPath("$.token")
+                                        .isNotEmpty()
+                        )
+                        .andExpect(
+                                jsonPath("$.refreshToken")
+                                        .isNotEmpty()
+                        )
+                        .andReturn();
 
-        String newRefreshToken = jsonMapper
-                .readTree(
-                        refreshResult
-                                .getResponse()
-                                .getContentAsString()
-                )
-                .get("refreshToken")
-                .asText();
+        String newRefreshToken =
+                jsonMapper
+                        .readTree(
+                                refreshResult
+                                        .getResponse()
+                                        .getContentAsString()
+                        )
+                        .get("refreshToken")
+                        .asText();
 
         assertNotEquals(
                 oldRefreshToken,
@@ -89,13 +114,21 @@ class RefreshTokenIntegrationTest {
 
         mockMvc.perform(
                         post("/api/auth/refresh")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(refreshBody)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        refreshBody
+                                )
                 )
-                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        status().isUnauthorized()
+                )
                 .andExpect(
                         jsonPath("$.message")
-                                .value("Geçersiz refresh token")
+                                .value(
+                                        "Geçersiz refresh token"
+                                )
                 );
     }
 }

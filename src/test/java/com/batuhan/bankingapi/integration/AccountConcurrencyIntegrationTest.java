@@ -38,96 +38,150 @@ class AccountConcurrencyIntegrationTest {
     private TransactionRepository transactionRepository;
 
     @Test
-    void shouldPreventDoubleWithdrawWithPessimisticLock() throws Exception {
+    void shouldPreventDoubleWithdrawWithPessimisticLock()
+            throws Exception {
 
-        String email = "concurrency-" + UUID.randomUUID() + "@test.com";
+        String email =
+                "concurrency-" +
+                        UUID.randomUUID() +
+                        "@test.com";
 
-        User user = new User();
-        user.setFullName("Concurrency Test");
-        user.setEmail(email);
+        User user =
+                IntegrationTestData.user(
+                        "Concurrency Test",
+                        email
+                );
 
-        user = userRepository.saveAndFlush(user);
+        user =
+                userRepository.saveAndFlush(user);
 
         Account account = new Account();
+
         account.setAccountNumber(
-                "ACC-" + UUID.randomUUID()
-                        .toString()
-                        .substring(0, 8)
-                        .toUpperCase()
+                "ACC-" +
+                        UUID.randomUUID()
+                                .toString()
+                                .substring(0, 8)
+                                .toUpperCase()
         );
-        account.setBalance(new BigDecimal("1000.00"));
+
+        account.setBalance(
+                new BigDecimal("1000.00")
+        );
+
         account.setUser(user);
 
-        account = accountRepository.saveAndFlush(account);
+        account =
+                accountRepository.saveAndFlush(account);
 
         Long accountId = account.getId();
         Long userId = user.getId();
 
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        ExecutorService executor =
+                Executors.newFixedThreadPool(2);
 
-        CountDownLatch ready = new CountDownLatch(2);
-        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch ready =
+                new CountDownLatch(2);
+
+        CountDownLatch start =
+                new CountDownLatch(1);
 
         try {
 
-            Future<String> firstWithdraw = executor.submit(() -> {
-                ready.countDown();
-                start.await();
+            Future<String> firstWithdraw =
+                    executor.submit(() -> {
 
-                try {
-                    accountService.withdraw(
-                            accountId,
-                            new BigDecimal("800.00"),
-                            email
-                    );
+                        ready.countDown();
+                        start.await();
 
-                    return "SUCCESS";
+                        try {
 
-                } catch (InsufficientBalanceException exception) {
-                    return "INSUFFICIENT";
-                }
-            });
+                            accountService.withdraw(
+                                    accountId,
+                                    new BigDecimal("800.00"),
+                                    email
+                            );
 
-            Future<String> secondWithdraw = executor.submit(() -> {
-                ready.countDown();
-                start.await();
+                            return "SUCCESS";
 
-                try {
-                    accountService.withdraw(
-                            accountId,
-                            new BigDecimal("800.00"),
-                            email
-                    );
+                        } catch (
+                                InsufficientBalanceException exception
+                        ) {
 
-                    return "SUCCESS";
+                            return "INSUFFICIENT";
+                        }
+                    });
 
-                } catch (InsufficientBalanceException exception) {
-                    return "INSUFFICIENT";
-                }
-            });
+            Future<String> secondWithdraw =
+                    executor.submit(() -> {
+
+                        ready.countDown();
+                        start.await();
+
+                        try {
+
+                            accountService.withdraw(
+                                    accountId,
+                                    new BigDecimal("800.00"),
+                                    email
+                            );
+
+                            return "SUCCESS";
+
+                        } catch (
+                                InsufficientBalanceException exception
+                        ) {
+
+                            return "INSUFFICIENT";
+                        }
+                    });
 
             ready.await();
 
             start.countDown();
 
-            String firstResult = firstWithdraw.get();
-            String secondResult = secondWithdraw.get();
+            String firstResult =
+                    firstWithdraw.get();
 
-            long successCount = List.of(firstResult, secondResult)
-                    .stream()
-                    .filter("SUCCESS"::equals)
-                    .count();
+            String secondResult =
+                    secondWithdraw.get();
 
-            long insufficientCount = List.of(firstResult, secondResult)
-                    .stream()
-                    .filter("INSUFFICIENT"::equals)
-                    .count();
+            long successCount =
+                    List.of(
+                                    firstResult,
+                                    secondResult
+                            )
+                            .stream()
+                            .filter(
+                                    "SUCCESS"::equals
+                            )
+                            .count();
 
-            assertEquals(1, successCount);
-            assertEquals(1, insufficientCount);
+            long insufficientCount =
+                    List.of(
+                                    firstResult,
+                                    secondResult
+                            )
+                            .stream()
+                            .filter(
+                                    "INSUFFICIENT"::equals
+                            )
+                            .count();
 
-            Account finalAccount = accountRepository.findById(accountId)
-                    .orElseThrow();
+            assertEquals(
+                    1,
+                    successCount
+            );
+
+            assertEquals(
+                    1,
+                    insufficientCount
+            );
+
+            Account finalAccount =
+                    accountRepository
+                            .findById(accountId)
+                            .orElseThrow();
 
             assertEquals(
                     new BigDecimal("200.00"),
@@ -141,7 +195,10 @@ class AccountConcurrencyIntegrationTest {
                                     accountId
                             );
 
-            assertEquals(1, transactions.size());
+            assertEquals(
+                    1,
+                    transactions.size()
+            );
 
         } finally {
 
@@ -154,9 +211,14 @@ class AccountConcurrencyIntegrationTest {
                                     accountId
                             );
 
-            transactionRepository.deleteAll(transactions);
-            accountRepository.deleteById(accountId);
-            userRepository.deleteById(userId);
+            transactionRepository
+                    .deleteAll(transactions);
+
+            accountRepository
+                    .deleteById(accountId);
+
+            userRepository
+                    .deleteById(userId);
         }
     }
 }
