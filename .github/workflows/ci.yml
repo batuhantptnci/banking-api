@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: banking_db
+          POSTGRES_DB: banking_test_db
           POSTGRES_USER: banking_user
           POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U banking_user -d banking_db"
+          --health-cmd="pg_isready -U banking_user -d banking_test_db"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=5
