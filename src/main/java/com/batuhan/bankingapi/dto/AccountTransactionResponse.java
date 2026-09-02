@@ -12,10 +12,32 @@ import java.time.LocalDateTime;
 public class AccountTransactionResponse {
 
     private Long id;
+
     private TransactionType type;
+
     private TransactionDirection direction;
+
     private BigDecimal amount;
+
     private Long accountId;
+
+    private String accountNumber;
+
+    private String accountHolderName;
+
     private Long targetAccountId;
+
+    private String targetAccountNumber;
+
+    private String targetAccountHolderName;
+
+    private BigDecimal balanceAfter;
+
+    private String description;
+
+    private String channel;
+
+    private String status;
+
     private LocalDateTime createdAt;
 }

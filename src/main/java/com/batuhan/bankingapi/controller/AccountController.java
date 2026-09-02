@@ -1,5 +1,6 @@
 package com.batuhan.bankingapi.controller;
 
+import com.batuhan.bankingapi.dto.RecipientLookupResponse;
 import com.batuhan.bankingapi.dto.AccountResponse;
 import com.batuhan.bankingapi.dto.DepositRequest;
 import com.batuhan.bankingapi.dto.TransferRequest;
@@ -55,6 +56,20 @@ public class AccountController {
                 .stream()
                 .map(AccountMapper::toResponse)
                 .toList();
+    }
+    @GetMapping("/recipient")
+    public RecipientLookupResponse getRecipient(
+            @RequestParam String accountNumber
+    ) {
+        Account account =
+                accountService.getAccountByAccountNumber(
+                        accountNumber
+                );
+
+        return new RecipientLookupResponse(
+                account.getAccountNumber(),
+                account.getUser().getFullName()
+        );
     }
 
     @GetMapping("/{id}")

@@ -14,8 +14,11 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    public TransactionService(
+            TransactionRepository transactionRepository
+    ) {
+        this.transactionRepository =
+                transactionRepository;
     }
 
     public Transaction createTransaction(
@@ -24,18 +27,40 @@ public class TransactionService {
             Account account,
             Account targetAccount
     ) {
-
-        Transaction transaction = new Transaction();
+        Transaction transaction =
+                new Transaction();
 
         transaction.setType(type);
         transaction.setAmount(amount);
-        transaction.setAccount(account);
-        transaction.setTargetAccount(targetAccount);
 
-        return transactionRepository.save(transaction);
+        transaction.setAccount(account);
+        transaction.setTargetAccount(
+                targetAccount
+        );
+
+        // Kaynak hesabın işlem tamamlandıktan
+        // sonraki gerçek bakiye snapshot'ı.
+        transaction.setSourceBalanceAfter(
+                account.getBalance()
+        );
+
+        // Transfer varsa alıcı hesabın da
+        // işlem sonrası bakiye snapshot'ı.
+        transaction.setTargetBalanceAfter(
+                targetAccount != null
+                        ? targetAccount.getBalance()
+                        : null
+        );
+
+        return transactionRepository.save(
+                transaction
+        );
     }
-    
-    public List<Transaction> getTransactionsByAccountId(Long accountId) {
+
+    public List<Transaction>
+    getTransactionsByAccountId(
+            Long accountId
+    ) {
         return transactionRepository
                 .findByAccountIdOrTargetAccountIdOrderByCreatedAtDesc(
                         accountId,

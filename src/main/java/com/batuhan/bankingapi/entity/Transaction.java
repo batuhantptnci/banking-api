@@ -23,17 +23,39 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionType type;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(
+            nullable = false,
+            precision = 19,
+            scale = 2
+    )
     private BigDecimal amount;
 
     @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(
+            name = "account_id",
+            nullable = false
+    )
     private Account account;
 
     @ManyToOne
     @JoinColumn(name = "target_account_id")
     private Account targetAccount;
 
+    @Column(
+            name = "source_balance_after",
+            precision = 19,
+            scale = 2
+    )
+    private BigDecimal sourceBalanceAfter;
+
+    @Column(
+            name = "target_balance_after",
+            precision = 19,
+            scale = 2
+    )
+    private BigDecimal targetBalanceAfter;
+
     @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt =
+            LocalDateTime.now();
 }

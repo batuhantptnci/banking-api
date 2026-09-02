@@ -57,6 +57,20 @@ public class AccountService {
         return accountRepository.findById(id)
                 .orElseThrow(() -> new AccountNotFoundException("Hesap bulunamadı"));
     }
+    public Account getAccountByAccountNumber(
+            String accountNumber
+    ) {
+        String normalizedAccountNumber =
+                accountNumber.trim().toUpperCase();
+
+        return accountRepository
+                .findByAccountNumber(normalizedAccountNumber)
+                .orElseThrow(
+                        () -> new AccountNotFoundException(
+                                "Alıcı hesap bulunamadı"
+                        )
+                );
+    }
     @Transactional
     public Account deposit(
             Long accountId,
