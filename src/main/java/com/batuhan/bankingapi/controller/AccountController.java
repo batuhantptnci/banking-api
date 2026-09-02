@@ -108,13 +108,16 @@ public class AccountController {
 
         accountService.transfer(
                 request.getFromAccountId(),
-                request.getToAccountId(),
+                request.getToAccountNumber(),
                 request.getAmount(),
                 principal.getName()
         );
 
         return ResponseEntity.ok(
-                Map.of("message", "Transfer başarıyla tamamlandı")
+                Map.of(
+                        "message",
+                        "Transfer başarıyla tamamlandı"
+                )
         );
     }
 

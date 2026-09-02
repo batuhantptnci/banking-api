@@ -44,6 +44,10 @@ public class AccountServiceTest {
         );
     }
 
+    // =========================================================================
+    // DEPOSIT
+    // =========================================================================
+
     @Test
     void shouldDepositMoneySuccessfully() {
 
@@ -72,6 +76,10 @@ public class AccountServiceTest {
                 result.getBalance()
         );
     }
+
+    // =========================================================================
+    // WITHDRAW
+    // =========================================================================
 
     @Test
     void shouldWithdrawMoneySuccessfully() {
@@ -150,6 +158,10 @@ public class AccountServiceTest {
         );
     }
 
+    // =========================================================================
+    // TRANSFER
+    // =========================================================================
+
     @Test
     void shouldTransferMoneySuccessfully() {
 
@@ -161,13 +173,18 @@ public class AccountServiceTest {
 
         Account senderAccount = new Account();
         senderAccount.setId(1L);
+        senderAccount.setAccountNumber("ACC-SEND1234");
         senderAccount.setBalance(new BigDecimal("1000.00"));
         senderAccount.setUser(senderUser);
 
         Account receiverAccount = new Account();
         receiverAccount.setId(2L);
+        receiverAccount.setAccountNumber("ACC-RECV1234");
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
+
+        when(accountRepository.findByAccountNumber("ACC-RECV1234"))
+                .thenReturn(Optional.of(receiverAccount));
 
         when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
@@ -177,7 +194,7 @@ public class AccountServiceTest {
 
         accountService.transfer(
                 1L,
-                2L,
+                "ACC-RECV1234",
                 new BigDecimal("300.00"),
                 "sender@test.com"
         );
@@ -204,13 +221,18 @@ public class AccountServiceTest {
 
         Account senderAccount = new Account();
         senderAccount.setId(1L);
+        senderAccount.setAccountNumber("ACC-SEND1234");
         senderAccount.setBalance(new BigDecimal("100.00"));
         senderAccount.setUser(senderUser);
 
         Account receiverAccount = new Account();
         receiverAccount.setId(2L);
+        receiverAccount.setAccountNumber("ACC-RECV1234");
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
+
+        when(accountRepository.findByAccountNumber("ACC-RECV1234"))
+                .thenReturn(Optional.of(receiverAccount));
 
         when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
@@ -222,7 +244,7 @@ public class AccountServiceTest {
                 InsufficientBalanceException.class,
                 () -> accountService.transfer(
                         1L,
-                        2L,
+                        "ACC-RECV1234",
                         new BigDecimal("500.00"),
                         "sender@test.com"
                 )
@@ -242,11 +264,23 @@ public class AccountServiceTest {
     @Test
     void shouldThrowExceptionWhenTransferringToSameAccount() {
 
+        User user = new User();
+        user.setEmail("test@test.com");
+
+        Account account = new Account();
+        account.setId(1L);
+        account.setAccountNumber("ACC-SAME1234");
+        account.setBalance(new BigDecimal("1000.00"));
+        account.setUser(user);
+
+        when(accountRepository.findByAccountNumber("ACC-SAME1234"))
+                .thenReturn(Optional.of(account));
+
         assertThrows(
                 InvalidTransferException.class,
                 () -> accountService.transfer(
                         1L,
-                        1L,
+                        "ACC-SAME1234",
                         new BigDecimal("100.00"),
                         "test@test.com"
                 )
@@ -264,13 +298,18 @@ public class AccountServiceTest {
 
         Account senderAccount = new Account();
         senderAccount.setId(1L);
+        senderAccount.setAccountNumber("ACC-SEND1234");
         senderAccount.setBalance(new BigDecimal("1000.00"));
         senderAccount.setUser(owner);
 
         Account receiverAccount = new Account();
         receiverAccount.setId(2L);
+        receiverAccount.setAccountNumber("ACC-RECV1234");
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
+
+        when(accountRepository.findByAccountNumber("ACC-RECV1234"))
+                .thenReturn(Optional.of(receiverAccount));
 
         when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
@@ -282,7 +321,7 @@ public class AccountServiceTest {
                 AccountAccessDeniedException.class,
                 () -> accountService.transfer(
                         1L,
-                        2L,
+                        "ACC-RECV1234",
                         new BigDecimal("100.00"),
                         "hacker@test.com"
                 )
@@ -292,7 +331,16 @@ public class AccountServiceTest {
                 new BigDecimal("1000.00"),
                 senderAccount.getBalance()
         );
+
+        assertEquals(
+                new BigDecimal("200.00"),
+                receiverAccount.getBalance()
+        );
     }
+
+    // =========================================================================
+    // TRANSACTION CREATION
+    // =========================================================================
 
     @Test
     void shouldCreateTransactionWhenDepositingMoney() {
@@ -367,13 +415,18 @@ public class AccountServiceTest {
 
         Account senderAccount = new Account();
         senderAccount.setId(1L);
+        senderAccount.setAccountNumber("ACC-SEND1234");
         senderAccount.setBalance(new BigDecimal("1000.00"));
         senderAccount.setUser(senderUser);
 
         Account receiverAccount = new Account();
         receiverAccount.setId(2L);
+        receiverAccount.setAccountNumber("ACC-RECV1234");
         receiverAccount.setBalance(new BigDecimal("200.00"));
         receiverAccount.setUser(receiverUser);
+
+        when(accountRepository.findByAccountNumber("ACC-RECV1234"))
+                .thenReturn(Optional.of(receiverAccount));
 
         when(accountRepository.findByIdForUpdate(1L))
                 .thenReturn(Optional.of(senderAccount));
@@ -383,7 +436,7 @@ public class AccountServiceTest {
 
         accountService.transfer(
                 1L,
-                2L,
+                "ACC-RECV1234",
                 new BigDecimal("300.00"),
                 "sender@test.com"
         );

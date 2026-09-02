@@ -108,38 +108,65 @@ public class AccountService {
     @Transactional
     public void transfer(
             Long fromAccountId,
-            Long toAccountId,
+            String toAccountNumber,
             BigDecimal amount,
             String userEmail
     ) {
+        String normalizedAccountNumber =
+                toAccountNumber.trim().toUpperCase();
+
+        Account destinationAccount = accountRepository
+                .findByAccountNumber(normalizedAccountNumber)
+                .orElseThrow(
+                        () -> new AccountNotFoundException(
+                                "Alıcı hesap bulunamadı"
+                        )
+                );
+
+        Long toAccountId = destinationAccount.getId();
+
         if (fromAccountId.equals(toAccountId)) {
-            throw new InvalidTransferException("Gönderen ve alıcı hesap aynı olamaz");
+            throw new InvalidTransferException(
+                    "Gönderen ve alıcı hesap aynı olamaz"
+            );
         }
 
+        // Deadlock riskini azaltmak için her zaman küçük ID önce lock edilir.
         Long firstId = Math.min(fromAccountId, toAccountId);
         Long secondId = Math.max(fromAccountId, toAccountId);
 
         Account firstAccount = getAccountForUpdate(firstId);
         Account secondAccount = getAccountForUpdate(secondId);
 
-        Account fromAccount = fromAccountId.equals(firstId)
-                ? firstAccount
-                : secondAccount;
+        Account fromAccount =
+                fromAccountId.equals(firstId)
+                        ? firstAccount
+                        : secondAccount;
 
-        Account toAccount = toAccountId.equals(firstId)
-                ? firstAccount
-                : secondAccount;
+        Account toAccount =
+                toAccountId.equals(firstId)
+                        ? firstAccount
+                        : secondAccount;
 
         if (!fromAccount.getUser().getEmail().equals(userEmail)) {
-            throw new AccountAccessDeniedException("Bu hesaba erişim yetkiniz yok");
+            throw new AccountAccessDeniedException(
+                    "Bu hesaptan transfer yapma yetkiniz yok"
+            );
         }
 
         if (fromAccount.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException("Yetersiz bakiye");
+            throw new InsufficientBalanceException(
+                    "Yetersiz bakiye"
+            );
         }
 
-        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-        toAccount.setBalance(toAccount.getBalance().add(amount));
+        fromAccount.setBalance(
+                fromAccount.getBalance().subtract(amount)
+        );
+
+        toAccount.setBalance(
+                toAccount.getBalance().add(amount)
+        );
 
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);

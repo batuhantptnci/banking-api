@@ -197,69 +197,45 @@ public class AccountIntegrationTest {
     }
 
     @Test
-    void shouldTransferMoneyBetweenAccountsSuccessfully()
-            throws Exception {
+    void shouldTransferMoneyBetweenAccountsSuccessfully() throws Exception {
 
         String email =
-                "transfer-integration-" +
-                        System.nanoTime() +
-                        "@test.com";
+                "transfer-integration-"
+                        + System.currentTimeMillis()
+                        + "@test.com";
 
-        String registerResponse =
-                mockMvc.perform(
-                                post("/api/auth/register")
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
-                                        .content(
-                                                IntegrationTestData.registerBody(
-                                                        "Transfer Integration Test",
-                                                        email
-                                                )
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+        String registerResponse = mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "fullName": "Transfer Integration Test",
+                                      "nationalId": "88353526326",
+                                      "phone": "5353526327",
+                                      "email": "%s",
+                                      "password": "12345678"
+                                    }
+                                    """.formatted(email))
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         String token =
-                JsonPath.read(
-                        registerResponse,
-                        "$.token"
-                );
+                JsonPath.read(registerResponse, "$.token");
 
-        String firstAccountResponse =
-                mockMvc.perform(
-                                post("/api/accounts")
-                                        .header(
-                                                "Authorization",
-                                                "Bearer " + token
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
-
-        String secondAccountResponse =
-                mockMvc.perform(
-                                post("/api/accounts")
-                                        .header(
-                                                "Authorization",
-                                                "Bearer " + token
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+        String firstAccountResponse = mockMvc.perform(
+                        post("/api/accounts")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         Integer firstAccountId =
                 JsonPath.read(
@@ -267,10 +243,28 @@ public class AccountIntegrationTest {
                         "$.id"
                 );
 
+        String secondAccountResponse = mockMvc.perform(
+                        post("/api/accounts")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
         Integer secondAccountId =
                 JsonPath.read(
                         secondAccountResponse,
                         "$.id"
+                );
+
+        String secondAccountNumber =
+                JsonPath.read(
+                        secondAccountResponse,
+                        "$.accountNumber"
                 );
 
         mockMvc.perform(
@@ -286,14 +280,12 @@ public class AccountIntegrationTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                        {
-                                          "amount": 1000
-                                        }
-                                        """)
+                                    {
+                                      "amount": 1000
+                                    }
+                                    """)
                 )
-                .andExpect(
-                        status().isOk()
-                );
+                .andExpect(status().isOk());
 
         mockMvc.perform(
                         post("/api/accounts/transfer")
@@ -305,19 +297,17 @@ public class AccountIntegrationTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                        {
-                                          "fromAccountId": %d,
-                                          "toAccountId": %d,
-                                          "amount": 300
-                                        }
-                                        """.formatted(
+                                    {
+                                      "fromAccountId": %d,
+                                      "toAccountNumber": "%s",
+                                      "amount": 300
+                                    }
+                                    """.formatted(
                                         firstAccountId,
-                                        secondAccountId
+                                        secondAccountNumber
                                 ))
                 )
-                .andExpect(
-                        status().isOk()
-                );
+                .andExpect(status().isOk());
 
         mockMvc.perform(
                         get(
@@ -329,9 +319,7 @@ public class AccountIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isOk()
-                )
+                .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.balance")
                                 .value(700)
@@ -347,9 +335,7 @@ public class AccountIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isOk()
-                )
+                .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.balance")
                                 .value(300)
@@ -357,69 +343,45 @@ public class AccountIntegrationTest {
     }
 
     @Test
-    void shouldReturnTransactionHistorySuccessfully()
-            throws Exception {
+    void shouldReturnTransactionHistorySuccessfully() throws Exception {
 
         String email =
-                "history-integration-" +
-                        System.nanoTime() +
-                        "@test.com";
+                "history-integration-"
+                        + System.currentTimeMillis()
+                        + "@test.com";
 
-        String registerResponse =
-                mockMvc.perform(
-                                post("/api/auth/register")
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
-                                        .content(
-                                                IntegrationTestData.registerBody(
-                                                        "History Integration Test",
-                                                        email
-                                                )
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+        String registerResponse = mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "fullName": "History Integration Test",
+                                      "nationalId": "88353526324",
+                                      "phone": "5353526325",
+                                      "email": "%s",
+                                      "password": "12345678"
+                                    }
+                                    """.formatted(email))
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         String token =
-                JsonPath.read(
-                        registerResponse,
-                        "$.token"
-                );
+                JsonPath.read(registerResponse, "$.token");
 
-        String firstAccountResponse =
-                mockMvc.perform(
-                                post("/api/accounts")
-                                        .header(
-                                                "Authorization",
-                                                "Bearer " + token
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
-
-        String secondAccountResponse =
-                mockMvc.perform(
-                                post("/api/accounts")
-                                        .header(
-                                                "Authorization",
-                                                "Bearer " + token
-                                        )
-                        )
-                        .andExpect(
-                                status().isCreated()
-                        )
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+        String firstAccountResponse = mockMvc.perform(
+                        post("/api/accounts")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         Integer firstAccountId =
                 JsonPath.read(
@@ -427,10 +389,28 @@ public class AccountIntegrationTest {
                         "$.id"
                 );
 
+        String secondAccountResponse = mockMvc.perform(
+                        post("/api/accounts")
+                                .header(
+                                        "Authorization",
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
         Integer secondAccountId =
                 JsonPath.read(
                         secondAccountResponse,
                         "$.id"
+                );
+
+        String secondAccountNumber =
+                JsonPath.read(
+                        secondAccountResponse,
+                        "$.accountNumber"
                 );
 
         mockMvc.perform(
@@ -446,14 +426,12 @@ public class AccountIntegrationTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                        {
-                                          "amount": 1000
-                                        }
-                                        """)
+                                    {
+                                      "amount": 1000
+                                    }
+                                    """)
                 )
-                .andExpect(
-                        status().isOk()
-                );
+                .andExpect(status().isOk());
 
         mockMvc.perform(
                         post("/api/accounts/transfer")
@@ -465,19 +443,17 @@ public class AccountIntegrationTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                        {
-                                          "fromAccountId": %d,
-                                          "toAccountId": %d,
-                                          "amount": 300
-                                        }
-                                        """.formatted(
+                                    {
+                                      "fromAccountId": %d,
+                                      "toAccountNumber": "%s",
+                                      "amount": 300
+                                    }
+                                    """.formatted(
                                         firstAccountId,
-                                        secondAccountId
+                                        secondAccountNumber
                                 ))
                 )
-                .andExpect(
-                        status().isOk()
-                );
+                .andExpect(status().isOk());
 
         mockMvc.perform(
                         get(
@@ -489,9 +465,7 @@ public class AccountIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isOk()
-                )
+                .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$[0].type")
                                 .value("TRANSFER")
@@ -535,9 +509,7 @@ public class AccountIntegrationTest {
                                         "Bearer " + token
                                 )
                 )
-                .andExpect(
-                        status().isOk()
-                )
+                .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$[0].type")
                                 .value("TRANSFER")
