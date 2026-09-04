@@ -7,6 +7,7 @@ import com.batuhan.bankingapi.exception.AccountAccessDeniedException;
 import com.batuhan.bankingapi.exception.InsufficientBalanceException;
 import com.batuhan.bankingapi.exception.InvalidTransferException;
 import com.batuhan.bankingapi.repository.AccountRepository;
+import com.batuhan.bankingapi.entity.Transaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -65,7 +66,19 @@ public class AccountServiceTest {
         when(accountRepository.save(account))
                 .thenReturn(account);
 
-        Account result = accountService.deposit(
+        Transaction transaction = new Transaction();
+        transaction.setAccount(account);
+
+        when(
+                transactionService.createTransaction(
+                        TransactionType.DEPOSIT,
+                        new BigDecimal("500.00"),
+                        account,
+                        null
+                )
+        ).thenReturn(transaction);
+
+        Transaction result = accountService.deposit(
                 1L,
                 new BigDecimal("500.00"),
                 "test@test.com"
@@ -73,8 +86,9 @@ public class AccountServiceTest {
 
         assertEquals(
                 new BigDecimal("600.00"),
-                result.getBalance()
+                result.getAccount().getBalance()
         );
+
     }
 
     // =========================================================================
@@ -98,7 +112,19 @@ public class AccountServiceTest {
         when(accountRepository.save(account))
                 .thenReturn(account);
 
-        Account result = accountService.withdraw(
+        Transaction transaction = new Transaction();
+        transaction.setAccount(account);
+
+        when(
+                transactionService.createTransaction(
+                        TransactionType.WITHDRAW,
+                        new BigDecimal("100.00"),
+                        account,
+                        null
+                )
+        ).thenReturn(transaction);
+
+        Transaction result = accountService.withdraw(
                 1L,
                 new BigDecimal("100.00"),
                 "test@test.com"
@@ -106,7 +132,7 @@ public class AccountServiceTest {
 
         assertEquals(
                 new BigDecimal("500.00"),
-                result.getBalance()
+                result.getAccount().getBalance()
         );
     }
 

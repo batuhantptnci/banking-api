@@ -165,8 +165,7 @@ public class AccountIntegrationTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$.balance")
-                                .value(1000)
+                        jsonPath("$.balanceAfter").value(1000)
                 );
 
         mockMvc.perform(
@@ -191,7 +190,7 @@ public class AccountIntegrationTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$.balance")
+                        jsonPath("$.balanceAfter")
                                 .value(750)
                 );
     }
