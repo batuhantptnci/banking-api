@@ -471,7 +471,8 @@ public class AccountServiceTest {
                 TransactionType.TRANSFER,
                 new BigDecimal("300.00"),
                 senderAccount,
-                receiverAccount
+                receiverAccount,
+                null
         );
     }
 }

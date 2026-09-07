@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,4 +27,10 @@ public class TransferRequest {
     @NotNull(message = "Tutar boş olamaz")
     @Positive(message = "Tutar 0'dan büyük olmalıdır")
     private BigDecimal amount;
+
+    @Size(
+            max = 100,
+            message = "Açıklama en fazla 100 karakter olabilir"
+    )
+    private String description;
 }

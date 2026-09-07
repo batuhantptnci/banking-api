@@ -33,6 +33,10 @@ public class AccountService {
         this.transactionService = transactionService;
     }
 
+    // =========================================================
+    // CREATE ACCOUNT
+    // =========================================================
+
     public Account createAccount(String userEmail) {
 
         User user = userService.getUserByEmail(userEmail);
@@ -40,10 +44,7 @@ public class AccountService {
         Account account = new Account();
 
         account.setAccountNumber(
-                "ACC-" + UUID.randomUUID()
-                        .toString()
-                        .substring(0, 8)
-                        .toUpperCase()
+                generateAccountNumber()
         );
 
         account.setBalance(BigDecimal.ZERO);
@@ -52,16 +53,40 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
-    public List<Account> getAccountsByUserId(Long userId) {
+    public Account createDefaultAccount(User user) {
+
+        Account account = new Account();
+
+        account.setAccountNumber(
+                generateAccountNumber()
+        );
+
+        account.setBalance(BigDecimal.ZERO);
+        account.setUser(user);
+
+        return accountRepository.save(account);
+    }
+
+    // =========================================================
+    // GET ACCOUNTS
+    // =========================================================
+
+    public List<Account> getAccountsByUserId(
+            Long userId
+    ) {
 
         userService.getUserById(userId);
 
-        return accountRepository.findByUserId(userId);
+        return accountRepository
+                .findByUserId(userId);
     }
 
-    public Account getAccountById(Long id) {
+    public Account getAccountById(
+            Long id
+    ) {
 
-        return accountRepository.findById(id)
+        return accountRepository
+                .findById(id)
                 .orElseThrow(
                         () -> new AccountNotFoundException(
                                 "Hesap bulunamadı"
@@ -74,16 +99,24 @@ public class AccountService {
     ) {
 
         String normalizedAccountNumber =
-                accountNumber.trim().toUpperCase();
+                accountNumber
+                        .trim()
+                        .toUpperCase();
 
         return accountRepository
-                .findByAccountNumber(normalizedAccountNumber)
+                .findByAccountNumber(
+                        normalizedAccountNumber
+                )
                 .orElseThrow(
                         () -> new AccountNotFoundException(
                                 "Alıcı hesap bulunamadı"
                         )
                 );
     }
+
+    // =========================================================
+    // DEPOSIT
+    // =========================================================
 
     @Transactional
     public Transaction deposit(
@@ -99,19 +132,26 @@ public class AccountService {
                 );
 
         account.setBalance(
-                account.getBalance().add(amount)
+                account
+                        .getBalance()
+                        .add(amount)
         );
 
         Account savedAccount =
                 accountRepository.save(account);
 
-        return transactionService.createTransaction(
-                TransactionType.DEPOSIT,
-                amount,
-                savedAccount,
-                null
-        );
+        return transactionService
+                .createTransaction(
+                        TransactionType.DEPOSIT,
+                        amount,
+                        savedAccount,
+                        null
+                );
     }
+
+    // =========================================================
+    // WITHDRAW
+    // =========================================================
 
     @Transactional
     public Transaction withdraw(
@@ -126,33 +166,69 @@ public class AccountService {
                         userEmail
                 );
 
-        if (account.getBalance().compareTo(amount) < 0) {
+        if (account
+                .getBalance()
+                .compareTo(amount) < 0) {
+
             throw new InsufficientBalanceException(
                     "Yetersiz bakiye"
             );
         }
 
         account.setBalance(
-                account.getBalance().subtract(amount)
+                account
+                        .getBalance()
+                        .subtract(amount)
         );
 
         Account savedAccount =
                 accountRepository.save(account);
 
-        return transactionService.createTransaction(
-                TransactionType.WITHDRAW,
-                amount,
-                savedAccount,
-                null
-        );
+        return transactionService
+                .createTransaction(
+                        TransactionType.WITHDRAW,
+                        amount,
+                        savedAccount,
+                        null
+                );
     }
 
+    // =========================================================
+    // TRANSFER
+    // =========================================================
+
+    /*
+     * Eski çağrılar ve testler bozulmasın diye
+     * description olmadan da transfer yapılabilir.
+     */
     @Transactional
     public Transaction transfer(
             Long fromAccountId,
             String toAccountNumber,
             BigDecimal amount,
             String userEmail
+    ) {
+
+        return transfer(
+                fromAccountId,
+                toAccountNumber,
+                amount,
+                userEmail,
+                null
+        );
+    }
+
+    /*
+     * Güncel transfer metodu.
+     * Kullanıcının girdiği açıklamayı transaction'a gönderir.
+     */
+    @Transactional
+    public Transaction transfer(
+            Long fromAccountId,
+            String toAccountNumber,
+            BigDecimal amount,
+            String userEmail,
+            String description
     ) {
 
         String normalizedAccountNumber =
@@ -175,13 +251,16 @@ public class AccountService {
                 destinationAccount.getId();
 
         if (fromAccountId.equals(toAccountId)) {
+
             throw new InvalidTransferException(
                     "Gönderen ve alıcı hesap aynı olamaz"
             );
         }
 
-        // Deadlock riskini azaltmak için
-        // her zaman küçük ID önce lock edilir.
+        /*
+         * İki hesabı her zaman aynı sırada lock ediyoruz.
+         * Böylece karşılıklı transferlerde deadlock riski azalır.
+         */
         Long firstId =
                 Math.min(
                         fromAccountId,
@@ -210,6 +289,10 @@ public class AccountService {
                         ? firstAccount
                         : secondAccount;
 
+        /*
+         * Transferi yapan kullanıcı gerçekten
+         * kaynak hesabın sahibi mi?
+         */
         if (!fromAccount
                 .getUser()
                 .getEmail()
@@ -220,6 +303,9 @@ public class AccountService {
             );
         }
 
+        /*
+         * Yeterli bakiye kontrolü.
+         */
         if (fromAccount
                 .getBalance()
                 .compareTo(amount) < 0) {
@@ -229,12 +315,18 @@ public class AccountService {
             );
         }
 
+        /*
+         * Kaynak hesaptan düş.
+         */
         fromAccount.setBalance(
                 fromAccount
                         .getBalance()
                         .subtract(amount)
         );
 
+        /*
+         * Alıcı hesaba ekle.
+         */
         toAccount.setBalance(
                 toAccount
                         .getBalance()
@@ -244,13 +336,29 @@ public class AccountService {
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
 
-        return transactionService.createTransaction(
-                TransactionType.TRANSFER,
-                amount,
-                fromAccount,
-                toAccount
-        );
+        /*
+         * Transaction oluştur.
+         *
+         * TransactionService burada:
+         * - sourceBalanceAfter
+         * - targetBalanceAfter
+         * - description
+         *
+         * alanlarını snapshot olarak kaydediyor.
+         */
+        return transactionService
+                .createTransaction(
+                        TransactionType.TRANSFER,
+                        amount,
+                        fromAccount,
+                        toAccount,
+                        description
+                );
     }
+
+    // =========================================================
+    // OWNERSHIP
+    // =========================================================
 
     public Account getOwnedAccount(
             Long accountId,
@@ -280,7 +388,9 @@ public class AccountService {
 
         Account account =
                 accountRepository
-                        .findByIdForUpdate(accountId)
+                        .findByIdForUpdate(
+                                accountId
+                        )
                         .orElseThrow(
                                 () -> new AccountNotFoundException(
                                         "Hesap bulunamadı"
@@ -305,7 +415,9 @@ public class AccountService {
     ) {
 
         return accountRepository
-                .findByIdForUpdate(accountId)
+                .findByIdForUpdate(
+                        accountId
+                )
                 .orElseThrow(
                         () -> new AccountNotFoundException(
                                 "Hesap bulunamadı"
@@ -313,20 +425,30 @@ public class AccountService {
                 );
     }
 
-    public Account createDefaultAccount(User user) {
+    // =========================================================
+    // HELPERS
+    // =========================================================
 
-        Account account = new Account();
+    private String generateAccountNumber() {
 
-        account.setAccountNumber(
-                "ACC-" + UUID.randomUUID()
-                        .toString()
-                        .substring(0, 8)
-                        .toUpperCase()
+        String accountNumber;
+
+        do {
+            accountNumber =
+                    "ACC-" +
+                            UUID.randomUUID()
+                                    .toString()
+                                    .substring(0, 8)
+                                    .toUpperCase();
+
+        } while (
+                accountRepository
+                        .findByAccountNumber(
+                                accountNumber
+                        )
+                        .isPresent()
         );
 
-        account.setBalance(BigDecimal.ZERO);
-        account.setUser(user);
-
-        return accountRepository.save(account);
+        return accountNumber;
     }
 }

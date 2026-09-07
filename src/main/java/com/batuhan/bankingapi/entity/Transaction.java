@@ -55,6 +55,12 @@ public class Transaction {
     )
     private BigDecimal targetBalanceAfter;
 
+    @Column(
+            name = "description",
+            length = 100
+    )
+    private String description;
+
     @Column(nullable = false)
     private LocalDateTime createdAt =
             LocalDateTime.now();

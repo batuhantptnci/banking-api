@@ -27,6 +27,22 @@ public class TransactionService {
             Account account,
             Account targetAccount
     ) {
+        return createTransaction(
+                type,
+                amount,
+                account,
+                targetAccount,
+                null
+        );
+    }
+
+    public Transaction createTransaction(
+            TransactionType type,
+            BigDecimal amount,
+            Account account,
+            Account targetAccount,
+            String description
+    ) {
         Transaction transaction =
                 new Transaction();
 
@@ -38,23 +54,38 @@ public class TransactionService {
                 targetAccount
         );
 
-        // Kaynak hesabın işlem tamamlandıktan
-        // sonraki gerçek bakiye snapshot'ı.
         transaction.setSourceBalanceAfter(
                 account.getBalance()
         );
 
-        // Transfer varsa alıcı hesabın da
-        // işlem sonrası bakiye snapshot'ı.
         transaction.setTargetBalanceAfter(
                 targetAccount != null
                         ? targetAccount.getBalance()
                         : null
         );
 
+        transaction.setDescription(
+                normalizeDescription(description)
+        );
+
         return transactionRepository.save(
                 transaction
         );
+    }
+
+    private String normalizeDescription(
+            String description
+    ) {
+        if (description == null) {
+            return null;
+        }
+
+        String normalized =
+                description.trim();
+
+        return normalized.isEmpty()
+                ? null
+                : normalized;
     }
 
     public List<Transaction>

@@ -8,34 +8,30 @@ import com.batuhan.bankingapi.entity.TransactionType;
 
 import java.math.BigDecimal;
 
-public class TransactionMapper {
+public final class TransactionMapper {
 
-    private static final String CHANNEL =
-            "IBT Mobil";
-
-    private static final String STATUS =
-            "COMPLETED";
+    private static final String CHANNEL = "IBT Mobil";
+    private static final String STATUS = "COMPLETED";
 
     private TransactionMapper() {
     }
 
-    public static AccountTransactionResponse
-    toAccountResponse(
+    public static AccountTransactionResponse toAccountResponse(
             Transaction transaction,
             Long currentAccountId
     ) {
-
-        TransactionDirection direction =
-                resolveDirection(
-                        transaction,
-                        currentAccountId
-                );
 
         Account sourceAccount =
                 transaction.getAccount();
 
         Account targetAccount =
                 transaction.getTargetAccount();
+
+        TransactionDirection direction =
+                resolveDirection(
+                        transaction,
+                        currentAccountId
+                );
 
         BigDecimal balanceAfter =
                 resolveBalanceAfter(
@@ -45,17 +41,12 @@ public class TransactionMapper {
 
         return new AccountTransactionResponse(
                 transaction.getId(),
-
                 transaction.getType(),
-
                 direction,
-
                 transaction.getAmount(),
 
                 sourceAccount.getId(),
-
                 sourceAccount.getAccountNumber(),
-
                 sourceAccount
                         .getUser()
                         .getFullName(),
@@ -75,21 +66,14 @@ public class TransactionMapper {
                         : null,
 
                 balanceAfter,
-
-                resolveDescription(
-                        transaction.getType()
-                ),
-
+                resolveDescription(transaction),
                 CHANNEL,
-
                 STATUS,
-
                 transaction.getCreatedAt()
         );
     }
 
-    private static TransactionDirection
-    resolveDirection(
+    private static TransactionDirection resolveDirection(
             Transaction transaction,
             Long currentAccountId
     ) {
@@ -106,9 +90,11 @@ public class TransactionMapper {
             return TransactionDirection.OUTGOING;
         }
 
-        if (transaction.getTargetAccount() != null
-                && transaction
-                .getTargetAccount()
+        Account targetAccount =
+                transaction.getTargetAccount();
+
+        if (targetAccount != null
+                && targetAccount
                 .getId()
                 .equals(currentAccountId)) {
 
@@ -118,8 +104,7 @@ public class TransactionMapper {
         return TransactionDirection.OUTGOING;
     }
 
-    private static BigDecimal
-    resolveBalanceAfter(
+    private static BigDecimal resolveBalanceAfter(
             Transaction transaction,
             Long currentAccountId
     ) {
@@ -148,10 +133,19 @@ public class TransactionMapper {
     }
 
     private static String resolveDescription(
-            TransactionType type
+            Transaction transaction
     ) {
 
-        return switch (type) {
+        String description =
+                transaction.getDescription();
+
+        if (description != null
+                && !description.isBlank()) {
+
+            return description;
+        }
+
+        return switch (transaction.getType()) {
 
             case DEPOSIT ->
                     "IBT Mobil üzerinden para yatırma";

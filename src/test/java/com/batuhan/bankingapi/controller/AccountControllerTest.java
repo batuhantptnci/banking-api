@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AccountController.class)
 @AutoConfigureMockMvc(addFilters = false)
-public class AccountControllerTest {
+class AccountControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -45,9 +45,9 @@ public class AccountControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
-    // =========================================================================
+    // =========================================================
     // MY ACCOUNTS
-    // =========================================================================
+    // =========================================================
 
     @Test
     void shouldGetMyAccountsSuccessfully() throws Exception {
@@ -74,10 +74,7 @@ public class AccountControllerTest {
                                 .principal(() -> "test@test.com")
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$[0].id")
-                                .value(10)
-                )
+                .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(
                         jsonPath("$[0].accountNumber")
                                 .value("ACC-TEST1234")
@@ -92,9 +89,9 @@ public class AccountControllerTest {
                 );
     }
 
-    // =========================================================================
-    // OWNED ACCOUNT
-    // =========================================================================
+    // =========================================================
+    // ACCOUNT DETAIL
+    // =========================================================
 
     @Test
     void shouldGetOwnedAccountSuccessfully() throws Exception {
@@ -122,10 +119,7 @@ public class AccountControllerTest {
                                 .principal(() -> "test@test.com")
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.id")
-                                .value(10)
-                )
+                .andExpect(jsonPath("$.id").value(10))
                 .andExpect(
                         jsonPath("$.accountNumber")
                                 .value("ACC-TEST1234")
@@ -140,9 +134,9 @@ public class AccountControllerTest {
                 );
     }
 
-    // =========================================================================
+    // =========================================================
     // DEPOSIT
-    // =========================================================================
+    // =========================================================
 
     @Test
     void shouldDepositMoneySuccessfully() throws Exception {
@@ -186,10 +180,7 @@ public class AccountControllerTest {
                                         """)
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.id")
-                                .value(100)
-                )
+                .andExpect(jsonPath("$.id").value(100))
                 .andExpect(
                         jsonPath("$.type")
                                 .value("DEPOSIT")
@@ -216,9 +207,9 @@ public class AccountControllerTest {
                 );
     }
 
-    // =========================================================================
+    // =========================================================
     // WITHDRAW
-    // =========================================================================
+    // =========================================================
 
     @Test
     void shouldWithdrawMoneySuccessfully() throws Exception {
@@ -262,10 +253,7 @@ public class AccountControllerTest {
                                         """)
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.id")
-                                .value(101)
-                )
+                .andExpect(jsonPath("$.id").value(101))
                 .andExpect(
                         jsonPath("$.type")
                                 .value("WITHDRAW")
@@ -292,9 +280,9 @@ public class AccountControllerTest {
                 );
     }
 
-    // =========================================================================
+    // =========================================================
     // TRANSFER
-    // =========================================================================
+    // =========================================================
 
     @Test
     void shouldTransferMoneySuccessfully() throws Exception {
@@ -333,13 +321,15 @@ public class AccountControllerTest {
         transaction.setTargetBalanceAfter(
                 new BigDecimal("800.00")
         );
+        transaction.setDescription("Eylül kirası");
 
         when(
                 accountService.transfer(
                         10L,
                         "ACC-RECV1234",
                         new BigDecimal("300.00"),
-                        "test@test.com"
+                        "test@test.com",
+                        "Eylül kirası"
                 )
         ).thenReturn(transaction);
 
@@ -351,15 +341,13 @@ public class AccountControllerTest {
                                         {
                                           "fromAccountId": 10,
                                           "toAccountNumber": "ACC-RECV1234",
-                                          "amount": 300.00
+                                          "amount": 300.00,
+                                          "description": "Eylül kirası"
                                         }
                                         """)
                 )
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.id")
-                                .value(102)
-                )
+                .andExpect(jsonPath("$.id").value(102))
                 .andExpect(
                         jsonPath("$.type")
                                 .value("TRANSFER")
@@ -395,15 +383,24 @@ public class AccountControllerTest {
                 .andExpect(
                         jsonPath("$.balanceAfter")
                                 .value(1700.00)
+                )
+                .andExpect(
+                        jsonPath("$.description")
+                                .value("Eylül kirası")
                 );
 
         verify(accountService).transfer(
                 10L,
                 "ACC-RECV1234",
                 new BigDecimal("300.00"),
-                "test@test.com"
+                "test@test.com",
+                "Eylül kirası"
         );
     }
+
+    // =========================================================
+    // INVALID TRANSFER
+    // =========================================================
 
     @Test
     void shouldReturnBadRequestWhenTransferAmountIsNegative()
@@ -417,7 +414,8 @@ public class AccountControllerTest {
                                         {
                                           "fromAccountId": 10,
                                           "toAccountNumber": "ACC-RECV1234",
-                                          "amount": -300.00
+                                          "amount": -300.00,
+                                          "description": "Test açıklama"
                                         }
                                         """)
                 )
@@ -430,7 +428,8 @@ public class AccountControllerTest {
                 anyLong(),
                 anyString(),
                 any(BigDecimal.class),
-                anyString()
+                anyString(),
+                any()
         );
     }
 }

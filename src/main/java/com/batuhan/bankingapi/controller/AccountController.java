@@ -14,6 +14,7 @@ import com.batuhan.bankingapi.mapper.TransactionMapper;
 import com.batuhan.bankingapi.service.AccountService;
 import com.batuhan.bankingapi.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,10 @@ public class AccountController {
         this.userService = userService;
     }
 
+    // =========================================================
+    // CREATE ACCOUNT
+    // =========================================================
+
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(
             Principal principal
@@ -46,13 +51,17 @@ public class AccountController {
                 );
 
         return ResponseEntity
-                .status(201)
+                .status(HttpStatus.CREATED)
                 .body(
                         AccountMapper.toResponse(
                                 account
                         )
                 );
     }
+
+    // =========================================================
+    // MY ACCOUNTS
+    // =========================================================
 
     @GetMapping("/me")
     public List<AccountResponse> getMyAccounts(
@@ -73,6 +82,10 @@ public class AccountController {
                 .toList();
     }
 
+    // =========================================================
+    // RECIPIENT LOOKUP
+    // =========================================================
+
     @GetMapping("/recipient")
     public RecipientLookupResponse getRecipient(
             @RequestParam String accountNumber
@@ -92,6 +105,10 @@ public class AccountController {
         );
     }
 
+    // =========================================================
+    // ACCOUNT DETAIL
+    // =========================================================
+
     @GetMapping("/{id}")
     public AccountResponse getAccountById(
             @PathVariable Long id,
@@ -104,8 +121,14 @@ public class AccountController {
                         principal.getName()
                 );
 
-        return AccountMapper.toResponse(account);
+        return AccountMapper.toResponse(
+                account
+        );
     }
+
+    // =========================================================
+    // DEPOSIT
+    // =========================================================
 
     @PostMapping("/{id}/deposit")
     public AccountTransactionResponse deposit(
@@ -128,6 +151,10 @@ public class AccountController {
                 );
     }
 
+    // =========================================================
+    // WITHDRAW
+    // =========================================================
+
     @PostMapping("/{id}/withdraw")
     public AccountTransactionResponse withdraw(
             @PathVariable Long id,
@@ -149,6 +176,10 @@ public class AccountController {
                 );
     }
 
+    // =========================================================
+    // TRANSFER
+    // =========================================================
+
     @PostMapping("/transfer")
     public AccountTransactionResponse transfer(
             @Valid @RequestBody TransferRequest request,
@@ -160,7 +191,8 @@ public class AccountController {
                         request.getFromAccountId(),
                         request.getToAccountNumber(),
                         request.getAmount(),
-                        principal.getName()
+                        principal.getName(),
+                        request.getDescription()
                 );
 
         return TransactionMapper
