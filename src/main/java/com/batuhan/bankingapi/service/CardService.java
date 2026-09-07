@@ -8,12 +8,14 @@ import com.batuhan.bankingapi.entity.CardType;
 import com.batuhan.bankingapi.entity.User;
 import com.batuhan.bankingapi.exception.CardAlreadyExistsException;
 import com.batuhan.bankingapi.exception.CardNotFoundException;
+import com.batuhan.bankingapi.exception.InvalidCardOperationException;
 import com.batuhan.bankingapi.mapper.CardMapper;
 import com.batuhan.bankingapi.repository.CardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -54,8 +56,9 @@ public class CardService {
                 );
 
         return cardRepository
-                .findByUserIdOrderByCreatedAtDesc(
-                        user.getId()
+                .findByUserIdAndCardStatusNotOrderByCreatedAtDesc(
+                        user.getId(),
+                        CardStatus.CLOSED
                 )
                 .stream()
                 .map(CardMapper::toResponse)
@@ -74,13 +77,17 @@ public class CardService {
                         userEmail
                 );
 
-        if (cardRepository
-                .existsByAccountId(
-                        accountId
-                )) {
+        boolean openCardExists =
+                cardRepository
+                        .existsByAccountIdAndCardStatusNot(
+                                accountId,
+                                CardStatus.CLOSED
+                        );
+
+        if (openCardExists) {
 
             throw new CardAlreadyExistsException(
-                    "Bu hesaba bağlı bir banka kartı zaten mevcut"
+                    "Bu hesaba bağlı aktif bir banka kartı zaten mevcut"
             );
         }
 
@@ -118,10 +125,10 @@ public class CardService {
                 expiry.getYear()
         );
 
+        card.setClosedAt(null);
+
         return CardMapper.toResponse(
-                cardRepository.save(
-                        card
-                )
+                cardRepository.save(card)
         );
     }
 
@@ -136,6 +143,22 @@ public class CardService {
                         cardId,
                         userEmail
                 );
+
+        if (card.getCardStatus()
+                == CardStatus.CLOSED) {
+
+            throw new InvalidCardOperationException(
+                    "Kapalı kart dondurulamaz"
+            );
+        }
+
+        if (card.getCardStatus()
+                == CardStatus.FROZEN) {
+
+            throw new InvalidCardOperationException(
+                    "Kart zaten dondurulmuş"
+            );
+        }
 
         card.setCardStatus(
                 CardStatus.FROZEN
@@ -158,6 +181,22 @@ public class CardService {
                         userEmail
                 );
 
+        if (card.getCardStatus()
+                == CardStatus.CLOSED) {
+
+            throw new InvalidCardOperationException(
+                    "Kapalı kart tekrar aktifleştirilemez"
+            );
+        }
+
+        if (card.getCardStatus()
+                == CardStatus.ACTIVE) {
+
+            throw new InvalidCardOperationException(
+                    "Kart zaten aktif"
+            );
+        }
+
         card.setCardStatus(
                 CardStatus.ACTIVE
         );
@@ -165,6 +204,37 @@ public class CardService {
         return CardMapper.toResponse(
                 cardRepository.save(card)
         );
+    }
+
+    @Transactional
+    public void closeCard(
+            Long cardId,
+            String userEmail
+    ) {
+
+        Card card =
+                getOwnedCard(
+                        cardId,
+                        userEmail
+                );
+
+        if (card.getCardStatus()
+                == CardStatus.CLOSED) {
+
+            throw new InvalidCardOperationException(
+                    "Kart zaten kapatılmış"
+            );
+        }
+
+        card.setCardStatus(
+                CardStatus.CLOSED
+        );
+
+        card.setClosedAt(
+                LocalDateTime.now()
+        );
+
+        cardRepository.save(card);
     }
 
     private Card getOwnedCard(

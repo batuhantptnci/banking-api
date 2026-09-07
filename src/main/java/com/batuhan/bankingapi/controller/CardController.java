@@ -78,4 +78,20 @@ public class CardController {
                 principal.getName()
         );
     }
+
+    @PostMapping("/{id}/close")
+    public ResponseEntity<Void> closeCard(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+
+        cardService.closeCard(
+                id,
+                principal.getName()
+        );
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
 }

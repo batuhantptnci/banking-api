@@ -8,15 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "cards",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uq_cards_account",
-                        columnNames = "account_id"
-                )
-        }
-)
+@Table(name = "cards")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,7 +25,7 @@ public class Card {
     )
     private User user;
 
-    @OneToOne(optional = false)
+    @ManyToOne(optional = false)
     @JoinColumn(
             name = "account_id",
             nullable = false
@@ -83,4 +75,7 @@ public class Card {
     )
     private LocalDateTime createdAt =
             LocalDateTime.now();
+
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
 }

@@ -163,4 +163,21 @@ public class GlobalExceptionHandler {
                         )
                 );
     }
+    @ExceptionHandler(
+            InvalidCardOperationException.class
+    )
+    public ResponseEntity<Map<String, String>>
+    handleInvalidCardOperation(
+            InvalidCardOperationException exception
+    ) {
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        Map.of(
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
 }
