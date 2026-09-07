@@ -93,4 +93,74 @@ public class GlobalExceptionHandler {
                         "message", ex.getMessage()
                 ));
     }
+    @ExceptionHandler(
+            SavedRecipientAlreadyExistsException.class
+    )
+    public ResponseEntity<Map<String, String>>
+    handleSavedRecipientAlreadyExists(
+            SavedRecipientAlreadyExistsException exception
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        Map.of(
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
+
+    @ExceptionHandler(
+            SavedRecipientNotFoundException.class
+    )
+    public ResponseEntity<Map<String, String>>
+    handleSavedRecipientNotFound(
+            SavedRecipientNotFoundException exception
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(
+                        Map.of(
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
+    @ExceptionHandler(
+            CardNotFoundException.class
+    )
+    public ResponseEntity<Map<String, String>>
+    handleCardNotFound(
+            CardNotFoundException exception
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(
+                        Map.of(
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
+
+    @ExceptionHandler(
+            CardAlreadyExistsException.class
+    )
+    public ResponseEntity<Map<String, String>>
+    handleCardAlreadyExists(
+            CardAlreadyExistsException exception
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        Map.of(
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
 }
